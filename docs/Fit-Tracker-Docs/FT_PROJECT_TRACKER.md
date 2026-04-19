@@ -176,16 +176,24 @@ Phase 1 completion date: 2026-04-19
 
 ### WEEK 5 — Workout Templates
 ```
-[ ] WorkoutTemplate model
-[ ] TemplateExercise model
-[ ] Save workout as template endpoint
-[ ] List templates endpoint
-[ ] Start workout from template
-[ ] Public templates browsing
+[x] WorkoutTemplate model
+[x] TemplateExercise model
+[x] Save workout as template endpoint
+[x] List templates endpoint (mine + public, filterable)
+[x] Start workout from template (pre-loads exercises)
+[x] Public templates browsing
 
-[ ] Templates page
-[ ] Save as template UI
-[ ] Template detail + start button
+[x] Templates page (My + Public tabs, create/edit/delete, start workout)
+[x] Save as template UI (SaveAsTemplateButton on WorkoutDetailPage)
+[x] Template detail + start button
+
+Week 5 notes:
+Backend: WorkoutTemplate/TemplateExercise models already in migration 002. New: app/schemas/templates.py,
+app/routers/templates.py (CRUD + start-from-template + save-as-template). save-as-template added to workouts router.
+Frontend: src/api/templates.ts, TemplatesPage (My/Public tabs, create modal with exercise search, start button),
+SaveAsTemplateButton component on WorkoutDetailPage.
+Tests: 20/20 pytest tests passing (conftest.py + pytest.ini infrastructure set up with SQLite in-memory).
+All Week 5 tasks completed on 2026-04-19
 ```
 
 ### WEEK 6 — Social Features

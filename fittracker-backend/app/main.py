@@ -9,6 +9,7 @@ from app.routers import exercise_library, workouts
 from app.routers import body
 from app.routers.nutrition import router as nutrition_router, foods_router
 from app.routers import gamification, analytics, notifications
+from app.routers import templates
 from app.core.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(
@@ -42,6 +43,7 @@ app.include_router(foods_router)
 app.include_router(gamification.router)
 app.include_router(analytics.router)
 app.include_router(notifications.router)
+app.include_router(templates.router)
 
 
 @app.on_event("startup")

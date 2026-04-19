@@ -13,6 +13,7 @@ import BodyMetricsPage from '@/pages/body/BodyMetricsPage'
 import NutritionPage from '@/pages/nutrition/NutritionPage'
 import AnalyticsPage from '@/pages/analytics/AnalyticsPage'
 import AchievementsPage from '@/pages/achievements/AchievementsPage'
+import TemplatesPage from '@/pages/templates/TemplatesPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +55,7 @@ export default function App() {
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/social" element={<ComingSoon name="Social Feed" />} />
               <Route path="/achievements" element={<AchievementsPage />} />
+              <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/profile" element={<ComingSoon name="Profile" />} />
               <Route path="/settings" element={<ComingSoon name="Settings" />} />
             </Route>

@@ -10,7 +10,7 @@ from app.database import get_db
 from app.dependencies import get_current_active_user
 from app.models.exercise import ExerciseLibrary, PersonalRecord
 from app.models.user import User
-from app.models.workout import WorkoutExercise, WorkoutSession, WorkoutSet
+from app.models.workout import WorkoutExercise, WorkoutSession, WorkoutSet, WorkoutTemplate, TemplateExercise
 from app.schemas.workout import (
     WorkoutExerciseCreate,
     WorkoutExerciseResponse,
@@ -23,6 +23,7 @@ from app.schemas.workout import (
     WorkoutSetUpdate,
     WorkoutStartRequest,
 )
+from app.schemas.templates import TemplateSaveFromWorkout, TemplateOut
 from app.services import gamification_service
 from app.services.notification_service import create_notification
 
@@ -425,3 +426,60 @@ async def delete_set(
         _not_found("Set not found")
     await db.delete(ws)
     await db.commit()
+
+
+# ─── Save workout as template ────────────────────────────────────────────────
+
+@router.post("/{workout_id}/save-as-template", response_model=TemplateOut, status_code=201)
+async def save_as_template(
+    workout_id: int,
+    body: TemplateSaveFromWorkout,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Save an existing workout session as a reusable template."""
+    from app.core.exceptions import ForbiddenError
+
+    session = await _get_session_for_user(
+        workout_id, current_user.id, db, load_relations=True
+    )
+
+    template = WorkoutTemplate(
+        user_id=current_user.id,
+        name=body.name,
+        description=body.description,
+        is_public=body.is_public,
+        estimated_duration_min=body.estimated_duration_min,
+    )
+    db.add(template)
+    await db.flush()
+
+    for order, we in enumerate(session.exercises, start=1):
+        te = TemplateExercise(
+            template_id=template.id,
+            exercise_library_id=we.exercise_library_id,
+            exercise_order=we.exercise_order or order,
+            rest_seconds=we.rest_seconds,
+            notes=we.notes,
+        )
+        db.add(te)
+
+    await db.commit()
+
+    result = await db.execute(
+        select(WorkoutTemplate)
+        .where(WorkoutTemplate.id == template.id)
+        .options(selectinload(WorkoutTemplate.exercises))
+    )
+    t = result.scalar_one()
+    return TemplateOut(
+        id=t.id,
+        user_id=t.user_id,
+        name=t.name,
+        description=t.description,
+        is_public=t.is_public,
+        estimated_duration_min=t.estimated_duration_min,
+        times_used=t.times_used,
+        created_at=t.created_at,
+        exercise_count=len(t.exercises),
+    )
