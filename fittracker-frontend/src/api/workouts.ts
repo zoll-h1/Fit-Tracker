@@ -121,4 +121,10 @@ export const workoutsApi = {
     apiClient
       .delete(`/api/workouts/${sessionId}/exercises/${exerciseId}/sets/${setId}`)
       .then(() => undefined),
+
+  update: (id: number, data: { name?: string; notes?: string }): Promise<WorkoutSession> =>
+    apiClient.patch<WorkoutSession>(`/api/workouts/${id}`, data).then(r => r.data),
+
+  delete: (id: number): Promise<void> =>
+    apiClient.delete(`/api/workouts/${id}`).then(() => undefined),
 };

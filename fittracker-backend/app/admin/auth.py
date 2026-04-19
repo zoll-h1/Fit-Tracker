@@ -1,6 +1,6 @@
 from fastapi import Request
 
-ADMIN_PASSWORD = "admin123"
+ADMIN_PASSWORD = "7881479914"
 ADMIN_COOKIE_NAME = "admin_session"
 ADMIN_SESSION_TOKEN = "fittracker_admin_secret_2024"
 

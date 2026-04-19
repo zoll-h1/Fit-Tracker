@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -121,6 +122,28 @@ async def get_workout(
 ):
     session = await _get_session_for_user(session_id, current_user.id, db, load_relations=True)
     return WorkoutSessionResponse.model_validate(session)
+
+
+class WorkoutUpdateRequest(BaseModel):
+    name: str | None = None
+    notes: str | None = None
+
+
+@router.patch("/{session_id}", response_model=WorkoutSessionResponse)
+async def update_workout(
+    session_id: int,
+    body: WorkoutUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    session = await _get_session_for_user(session_id, current_user.id, db)
+    if body.name is not None:
+        session.name = body.name
+    if body.notes is not None:
+        session.notes = body.notes
+    await db.commit()
+    session_refreshed = await _get_session_for_user(session_id, current_user.id, db, load_relations=True)
+    return WorkoutSessionResponse.model_validate(session_refreshed)
 
 
 @router.post("/{session_id}/finish", response_model=WorkoutSessionResponse)
@@ -273,13 +296,13 @@ async def finish_workout(
 
 
 @router.delete("/{session_id}", status_code=204)
-async def cancel_workout(
+async def delete_workout(
     session_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     session = await _get_session_for_user(session_id, current_user.id, db)
-    session.status = "cancelled"
+    await db.delete(session)
     await db.commit()
 
 
