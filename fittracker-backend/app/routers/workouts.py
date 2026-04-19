@@ -214,49 +214,53 @@ async def finish_workout(
 
     await db.flush()
 
-    # Gamification: award XP, update streak, check achievements
-    await gamification_service.award_xp(db, current_user.id, gamification_service.XP_AWARDS["complete_workout"], "complete_workout")
-    streak_result = await gamification_service.update_streak(db, current_user.id)
+    # Gamification / side-effects — wrapped so a failure never blocks the save
+    try:
+        await gamification_service.award_xp(db, current_user.id, gamification_service.XP_AWARDS["complete_workout"], "complete_workout")
+        await gamification_service.update_streak(db, current_user.id)
 
-    # Extra XP for any new PRs this session
-    pr_count_this_session = sum(
-        1 for we in session.exercises  # type: ignore[union-attr]
-        for ws in we.sets if ws.is_pr
-    )
-    if pr_count_this_session:
-        await gamification_service.award_xp(
-            db, current_user.id,
-            gamification_service.XP_AWARDS["pr_achieved"] * pr_count_this_session,
-            "pr_achieved"
+        pr_count_this_session = sum(
+            1 for we in session.exercises  # type: ignore[union-attr]
+            for ws in we.sets if ws.is_pr
         )
+        if pr_count_this_session:
+            await gamification_service.award_xp(
+                db, current_user.id,
+                gamification_service.XP_AWARDS["pr_achieved"] * pr_count_this_session,
+                "pr_achieved"
+            )
 
-    new_achievements = await gamification_service.check_achievements(db, current_user.id, "workout_finish")
+        new_achievements = await gamification_service.check_achievements(db, current_user.id, "workout_finish")
+        for ach in new_achievements:
+            await create_notification(
+                db, current_user.id, "achievement_earned",
+                "🏆 Achievement Unlocked!",
+                f"{ach['name']} — {ach['description']} (+{ach['xp_reward']} XP)",
+                action_url="/achievements",
+            )
+    except Exception:
+        pass  # gamification errors must not block the workout save
 
-    # Notify for new achievements
-    for ach in new_achievements:
-        await create_notification(
-            db, current_user.id, "achievement_earned",
-            f"🏆 Achievement Unlocked!",
-            f"{ach['name']} — {ach['description']} (+{ach['xp_reward']} XP)",
-            action_url="/achievements",
+    try:
+        from app.services.challenge_service import update_challenge_progress
+        await update_challenge_progress(db, current_user.id)
+    except Exception:
+        pass
+
+    try:
+        from app.models.social import ActivityFeed as ActivityFeedModel
+        feed_entry = ActivityFeedModel(
+            user_id=current_user.id,
+            activity_type="workout",
+            ref_id=session.id,
+            title=f"Completed workout: {session.name}",
+            body=f"{session.total_sets} sets · {int(float(session.total_volume_kg or 0))} kg volume"
+                 + (f" · {session.duration_seconds // 60} min" if session.duration_seconds else ""),
         )
-
-    # Update challenge progress
-    from app.services.challenge_service import update_challenge_progress
-    await update_challenge_progress(db, current_user.id)
-
-    # Auto-post to activity feed
-    from app.models.social import ActivityFeed as ActivityFeedModel
-    feed_entry = ActivityFeedModel(
-        user_id=current_user.id,
-        activity_type="workout",
-        ref_id=session.id,
-        title=f"Completed workout: {session.name}",
-        body=f"{session.total_sets} sets · {int(float(session.total_volume_kg or 0))} kg volume"
-             + (f" · {session.duration_seconds // 60} min" if session.duration_seconds else ""),
-    )
-    db.add(feed_entry)
-    await db.flush()
+        db.add(feed_entry)
+        await db.flush()
+    except Exception:
+        pass
 
     await db.commit()
 

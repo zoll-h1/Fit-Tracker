@@ -56,14 +56,23 @@ app.include_router(admin_router)
 @app.on_event("startup")
 async def startup_event():
     start_scheduler()
-    # Seed achievement definitions
     from app.database import AsyncSessionLocal
     from app.seeds.achievements import seed_achievements
+    from app.seeds.exercises import seed as seed_exercises
+    from app.seeds.foods import seed as seed_foods
     async with AsyncSessionLocal() as db:
         try:
             await seed_achievements(db)
         except Exception:
-            pass  # Tables may not exist yet (before migration)
+            pass
+        try:
+            await seed_exercises()
+        except Exception:
+            pass
+        try:
+            await seed_foods()
+        except Exception:
+            pass
 
 
 @app.on_event("shutdown")
