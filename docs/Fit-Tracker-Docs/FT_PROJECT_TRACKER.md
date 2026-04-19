@@ -21,8 +21,8 @@
 
 ```
 Phase: [1 / 2 / 3]
-Current Week: [2 — COMPLETE ✅]
-Current Module: [Week 3 — Body Metrics + Nutrition]
+Current Week: [3 — COMPLETE ✅]
+Current Module: [Week 4 — Gamification + Analytics]
 Blocker (if any): [None]
 ```
 
@@ -97,27 +97,32 @@ All Week 2 tasks completed on 2026-04-19
 
 ### WEEK 3 — Body Metrics + Nutrition
 ```
-[ ] Body metrics model + endpoints
-[ ] BMI auto-calculation
-[ ] Body goals model + endpoints
-[ ] Goal auto-completion detection
-[ ] Food database model + seed (200 foods)
-[ ] Food search endpoint
-[ ] Meal logging endpoints
-[ ] Daily nutrition summary query
-[ ] Nutrition goals
+[x] Body metrics model + endpoints
+[x] BMI auto-calculation
+[x] Body goals model + endpoints
+[x] Goal auto-completion detection
+[x] Food database model + seed (200 foods)
+[x] Food search endpoint
+[x] Meal logging endpoints
+[x] Daily nutrition summary query
+[x] Nutrition goals
 
-[ ] Body metrics page (log + history)
-[ ] Body metrics chart (weight over time)
-[ ] Goals progress section
-[ ] Nutrition page (daily view by meal type)
-[ ] Food search UI (modal)
-[ ] Daily macro ring chart
-[ ] Weekly adherence display
+[x] Body metrics page (log + history)
+[x] Body metrics chart (weight over time)
+[x] Goals progress section
+[x] Nutrition page (daily view by meal type)
+[x] Food search UI (modal)
+[x] Daily macro ring chart
+[x] Weekly adherence display
 
 Week 3 notes:
-_______________________________________________
-_______________________________________________
+Backend: BodyMetric/BodyGoal models, Food/MealLog/NutritionGoal models, Alembic migration 003.
+200 seeded foods with full macro data. Body router: log metrics + auto BMI + auto goal completion.
+Nutrition router: food search, meal log CRUD, daily summary by meal type, weekly adherence, goals upsert.
+Frontend: bodyApi + nutritionApi clients, BodyMetricsPage (chart + log modal + goals), NutritionPage
+(date nav + MacroRing SVG chart + per-meal sections + weekly adherence bar chart), FoodSearchModal,
+GoalsSection, MacroRing components. recharts + date-fns added.
+All Week 3 tasks completed on 2026-04-19
 ```
 
 ### WEEK 4 — Gamification + Analytics

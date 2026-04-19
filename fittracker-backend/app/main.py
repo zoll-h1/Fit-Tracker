@@ -6,6 +6,8 @@ from pathlib import Path
 from app.config import settings
 from app.routers import auth, users
 from app.routers import exercise_library, workouts
+from app.routers import body
+from app.routers.nutrition import router as nutrition_router, foods_router
 
 app = FastAPI(
     title="FitTracker API",
@@ -32,6 +34,9 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(exercise_library.router)
 app.include_router(workouts.router)
+app.include_router(body.router)
+app.include_router(nutrition_router)
+app.include_router(foods_router)
 
 
 @app.get("/health")
