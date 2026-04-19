@@ -22,6 +22,7 @@ const navItems = [
   { to: '/analytics', icon: LineChart, label: 'Analytics' },
   { to: '/social', icon: Users, label: 'Social' },
   { to: '/achievements', icon: Trophy, label: 'Achievements' },
+  { to: '/trainer', icon: Users, label: 'Trainer' },
   { to: '/profile', icon: User, label: 'Profile' },
 ]
 

@@ -20,6 +20,8 @@ import ChallengesPage from '@/pages/challenges/ChallengesPage'
 import ChallengeDetailPage from '@/pages/challenges/ChallengeDetailPage'
 import NotificationsPage from '@/pages/notifications/NotificationsPage'
 import SettingsPage from '@/pages/settings/SettingsPage'
+import TrainerPage from '@/pages/trainer/TrainerPage'
+import ProgramDetailPage from '@/pages/trainer/ProgramDetailPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -68,6 +70,8 @@ export default function App() {
               <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/profile" element={<ComingSoon name="Profile" />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/trainer" element={<TrainerPage />} />
+              <Route path="/trainer/programs/:id" element={<ProgramDetailPage />} />
             </Route>
           </Route>
 

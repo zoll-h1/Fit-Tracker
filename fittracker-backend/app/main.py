@@ -12,6 +12,8 @@ from app.routers import gamification, analytics, notifications
 from app.routers import templates
 from app.routers.social import router as social_router, users_router
 from app.routers import challenges
+from app.routers.trainer import router as trainer_router
+from app.models import trainer as trainer_models  # noqa: F401
 from app.admin.router import router as admin_router
 from app.core.scheduler import start_scheduler, stop_scheduler
 
@@ -50,6 +52,7 @@ app.include_router(templates.router)
 app.include_router(social_router)
 app.include_router(users_router)
 app.include_router(challenges.router)
+app.include_router(trainer_router)
 app.include_router(admin_router)
 
 

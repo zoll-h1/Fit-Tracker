@@ -47,18 +47,21 @@ async def client(engine):
 
 @pytest_asyncio.fixture(scope="function")
 async def exercise_id(engine) -> int:
-    """Insert a test exercise into the DB and return its id."""
+    """Insert a test exercise into the DB and return its id (idempotent)."""
     from sqlalchemy import text
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
     async with async_session() as session:
-        result = await session.execute(
+        await session.execute(
             text(
-                "INSERT INTO exercise_library (name, slug, muscle_primary, category, difficulty, is_custom, met_value) "
+                "INSERT OR IGNORE INTO exercise_library (name, slug, muscle_primary, category, difficulty, is_custom, met_value) "
                 "VALUES ('Test Exercise', 'test-exercise', 'chest', 'strength', 'beginner', 1, 5.0)"
             )
         )
         await session.commit()
-        return result.lastrowid
+        result = await session.execute(
+            text("SELECT id FROM exercise_library WHERE slug = 'test-exercise'")
+        )
+        return result.scalar_one()
 
 
 @pytest_asyncio.fixture(scope="function")
