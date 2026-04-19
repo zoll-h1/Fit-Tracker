@@ -1,9 +1,13 @@
+import csv
+import io
 from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select, desc
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from pydantic import BaseModel
 
 from app.database import get_db
@@ -343,3 +347,261 @@ async def workout_frequency(
         .order_by(func.date(WorkoutSession.started_at))
     )
     return [WorkoutFreqPoint(date=str(r.d), count=r.cnt) for r in result.all()]
+
+
+# ── Week 9: Advanced Analytics ────────────────────────────────────────────────
+
+class VolumeProgressionPoint(BaseModel):
+    week: str
+    total_volume: float
+    workout_count: int
+    rolling_avg: float
+
+
+class MuscleBalance(BaseModel):
+    category: str
+    sets_count: int
+    percentage: float
+    exercises: list[str]
+
+
+class BodyCompositionPoint(BaseModel):
+    date: str
+    weight_kg: float | None
+    body_fat_pct: float | None
+    bmi: float | None
+
+
+class NutritionHeatmapDay(BaseModel):
+    date: str
+    calories_logged: float
+    goal_calories: float | None
+    adherence_pct: float | None
+
+
+_PUSH_MUSCLES = {"chest", "shoulders", "triceps"}
+_PULL_MUSCLES = {"back", "biceps"}
+_LEG_MUSCLES = {"quadriceps", "hamstrings", "glutes", "calves"}
+_CORE_MUSCLES = {"abs", "core"}
+
+
+def _muscle_category(muscle_primary: str | None) -> str:
+    if not muscle_primary:
+        return "other"
+    muscles = {m.strip().lower() for m in muscle_primary.split(",")}
+    if muscles & _PUSH_MUSCLES:
+        return "push"
+    if muscles & _PULL_MUSCLES:
+        return "pull"
+    if muscles & _LEG_MUSCLES:
+        return "legs"
+    if muscles & _CORE_MUSCLES:
+        return "core"
+    return "other"
+
+
+@router.get("/volume-progression", response_model=list[VolumeProgressionPoint])
+async def volume_progression(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    since = date.today() - timedelta(weeks=16)
+    result = await db.execute(
+        select(
+            func.strftime("%Y-W%W", WorkoutSession.started_at).label("week"),
+            func.coalesce(func.sum(WorkoutSession.total_volume_kg), 0).label("vol"),
+            func.count(WorkoutSession.id).label("cnt"),
+        )
+        .where(
+            WorkoutSession.user_id == current_user.id,
+            WorkoutSession.status == "finished",
+            func.date(WorkoutSession.started_at) >= since,
+        )
+        .group_by(func.strftime("%Y-W%W", WorkoutSession.started_at))
+        .order_by(func.strftime("%Y-W%W", WorkoutSession.started_at))
+    )
+    rows = result.all()
+
+    points = []
+    vols = [float(r.vol) for r in rows]
+    for i, r in enumerate(rows):
+        window = vols[max(0, i - 3) : i + 1]
+        rolling_avg = sum(window) / len(window)
+        points.append(
+            VolumeProgressionPoint(
+                week=r.week,
+                total_volume=round(float(r.vol), 1),
+                workout_count=r.cnt,
+                rolling_avg=round(rolling_avg, 1),
+            )
+        )
+    return points
+
+
+@router.get("/muscle-balance", response_model=list[MuscleBalance])
+async def muscle_balance(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    since = date.today() - timedelta(days=30)
+    result = await db.execute(
+        select(
+            ExerciseLibrary.name,
+            ExerciseLibrary.muscle_primary,
+            func.count(WorkoutSet.id).label("sets"),
+        )
+        .join(WorkoutExercise, WorkoutSet.workout_exercise_id == WorkoutExercise.id)
+        .join(WorkoutSession, WorkoutExercise.session_id == WorkoutSession.id)
+        .join(ExerciseLibrary, WorkoutExercise.exercise_library_id == ExerciseLibrary.id)
+        .where(
+            WorkoutSession.user_id == current_user.id,
+            WorkoutSession.status == "finished",
+            WorkoutSet.completed == True,
+            func.date(WorkoutSession.started_at) >= since,
+        )
+        .group_by(ExerciseLibrary.id, ExerciseLibrary.name, ExerciseLibrary.muscle_primary)
+        .order_by(desc(func.count(WorkoutSet.id)))
+    )
+    rows = result.all()
+
+    cats: dict[str, dict] = {
+        "push": {"sets": 0, "exercises": []},
+        "pull": {"sets": 0, "exercises": []},
+        "legs": {"sets": 0, "exercises": []},
+        "core": {"sets": 0, "exercises": []},
+        "other": {"sets": 0, "exercises": []},
+    }
+    for r in rows:
+        cat = _muscle_category(r.muscle_primary)
+        cats[cat]["sets"] += r.sets
+        cats[cat]["exercises"].append((r.name, r.sets))
+
+    total = sum(c["sets"] for c in cats.values())
+    output = []
+    for cat_name, data in cats.items():
+        top3 = [e[0] for e in sorted(data["exercises"], key=lambda x: x[1], reverse=True)[:3]]
+        pct = round(data["sets"] / total * 100, 1) if total > 0 else 0.0
+        output.append(
+            MuscleBalance(category=cat_name, sets_count=data["sets"], percentage=pct, exercises=top3)
+        )
+    return output
+
+
+@router.get("/body-composition", response_model=list[BodyCompositionPoint])
+async def body_composition(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    since = date.today() - timedelta(days=90)
+    result = await db.execute(
+        select(BodyMetric)
+        .where(
+            BodyMetric.user_id == current_user.id,
+            func.date(BodyMetric.recorded_at) >= since,
+        )
+        .order_by(BodyMetric.recorded_at)
+    )
+    metrics = result.scalars().all()
+    return [
+        BodyCompositionPoint(
+            date=str(m.recorded_at)[:10],
+            weight_kg=float(m.weight_kg) if m.weight_kg is not None else None,
+            body_fat_pct=float(m.body_fat_pct) if m.body_fat_pct is not None else None,
+            bmi=float(m.bmi) if m.bmi is not None else None,
+        )
+        for m in metrics
+    ]
+
+
+@router.get("/nutrition-heatmap", response_model=list[NutritionHeatmapDay])
+async def nutrition_heatmap(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    today = date.today()
+    since = today - timedelta(days=89)  # 90 days inclusive
+
+    goal_r = await db.execute(
+        select(NutritionGoal).where(NutritionGoal.user_id == current_user.id)
+    )
+    goal = goal_r.scalar_one_or_none()
+    goal_calories = float(goal.calories_target) if goal else None
+
+    cal_r = await db.execute(
+        select(
+            func.date(MealLog.logged_at).label("d"),
+            func.sum(MealLog.calories).label("total"),
+        )
+        .where(
+            MealLog.user_id == current_user.id,
+            func.date(MealLog.logged_at) >= since,
+        )
+        .group_by(func.date(MealLog.logged_at))
+    )
+    daily_map = {str(r.d): float(r.total) for r in cal_r.all()}
+
+    days = []
+    for i in range(90):
+        d = since + timedelta(days=i)
+        d_str = str(d)
+        cal = daily_map.get(d_str, 0.0)
+        adherence = round(cal / goal_calories * 100, 1) if goal_calories else None
+        days.append(
+            NutritionHeatmapDay(
+                date=d_str,
+                calories_logged=cal,
+                goal_calories=goal_calories,
+                adherence_pct=adherence,
+            )
+        )
+    return days
+
+
+@router.get("/export/csv")
+async def export_workouts_csv(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    result = await db.execute(
+        select(WorkoutSession)
+        .where(
+            WorkoutSession.user_id == current_user.id,
+            WorkoutSession.status == "finished",
+        )
+        .options(
+            selectinload(WorkoutSession.exercises).selectinload(WorkoutExercise.exercise),
+            selectinload(WorkoutSession.exercises).selectinload(WorkoutExercise.sets),
+        )
+        .order_by(WorkoutSession.started_at)
+    )
+    sessions = result.scalars().all()
+
+    output = io.StringIO()
+    fieldnames = ["date", "workout_name", "duration_min", "total_volume_kg", "exercises"]
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    for session in sessions:
+        exercises_str = "; ".join(
+            f"{we.exercise.name}:{len(we.sets)}sets"
+            for we in session.exercises
+            if we.exercise
+        )
+        writer.writerow(
+            {
+                "date": str(session.started_at)[:10],
+                "workout_name": session.name,
+                "duration_min": (
+                    round(session.duration_seconds / 60, 1) if session.duration_seconds else 0
+                ),
+                "total_volume_kg": float(session.total_volume_kg),
+                "exercises": exercises_str,
+            }
+        )
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="workouts_{current_user.username}.csv"'
+        },
+    )

@@ -78,6 +78,27 @@ export interface PRRecord { exercise_id: number; exercise_name: string; weight_k
 export interface CalendarDay { date: string; has_workout: boolean; }
 export interface StreakCalendar { current_streak: number; longest_streak: number; calendar: CalendarDay[]; }
 
+export interface VolumeProgressionPoint {
+  week: string;
+  total_volume: number;
+  workout_count: number;
+  rolling_avg: number;
+}
+
+export interface MuscleBalanceCategory {
+  category: string;
+  sets_count: number;
+  percentage: number;
+  exercises: string[];
+}
+
+export interface BodyCompositionPoint {
+  date: string;
+  weight_kg: number | null;
+  body_fat_pct: number | null;
+  bmi: number | null;
+}
+
 export const analyticsApi = {
   dashboard: (): Promise<DashboardStats> =>
     apiClient.get<DashboardStats>('/api/analytics/dashboard').then(r => r.data),
@@ -101,6 +122,29 @@ export const analyticsApi = {
 
   workouts: (period = '30d') =>
     apiClient.get<{ date: string; count: number }[]>(`/api/analytics/workouts?period=${period}`).then(r => r.data),
+
+  volumeProgression: (): Promise<VolumeProgressionPoint[]> =>
+    apiClient.get('/api/analytics/volume-progression').then(r => r.data),
+
+  muscleBalance: (): Promise<MuscleBalanceCategory[]> =>
+    apiClient.get('/api/analytics/muscle-balance').then(r => r.data),
+
+  bodyComposition: (): Promise<BodyCompositionPoint[]> =>
+    apiClient.get('/api/analytics/body-composition').then(r => r.data),
+
+  downloadCSV: async () => {
+    const token = localStorage.getItem('access_token');
+    const resp = await fetch('/api/analytics/export/csv', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'workouts.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  },
 };
 
 export interface Notification {

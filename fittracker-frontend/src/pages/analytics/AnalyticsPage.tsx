@@ -2,21 +2,50 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+  AreaChart, Area, RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
+  ComposedChart,
 } from 'recharts';
-import { analyticsApi, type StrengthPoint, type VolumePoint, type MuscleGroup, type PRRecord } from '@/api/gamification';
+import {
+  analyticsApi,
+  type StrengthPoint, type VolumePoint, type MuscleGroup, type PRRecord,
+  type VolumeProgressionPoint, type MuscleBalanceCategory, type BodyCompositionPoint,
+} from '@/api/gamification';
 import { exercisesApi } from '@/api/exercises';
 import CalendarHeatmap from '@/components/analytics/CalendarHeatmap';
 
-const TABS = ['Overview', 'Strength', 'Volume', 'Muscles', 'Records'];
+const TABS = ['Overview', 'Strength', 'Volume', 'Muscles', 'Records', 'Volume Trend', 'Balance', 'Body Comp'];
 const PIE_COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1'];
+
+const BALANCE_COLORS: Record<string, string> = {
+  push: '#3b82f6',
+  pull: '#22c55e',
+  legs: '#f97316',
+  core: '#a855f7',
+  other: '#64748b',
+};
 
 export default function AnalyticsPage() {
   const [tab, setTab] = useState('Overview');
 
+  const handleExportCSV = () => {
+    analyticsApi.downloadCSV().catch(console.error);
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-white">Analytics</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-white">Analytics</h1>
+        <button
+          onClick={handleExportCSV}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export CSV
+        </button>
+      </div>
 
       {/* Tab bar */}
       <div className="flex gap-1 bg-slate-800 p-1 rounded-xl w-fit">
@@ -38,6 +67,9 @@ export default function AnalyticsPage() {
       {tab === 'Volume' && <VolumeTab />}
       {tab === 'Muscles' && <MusclesTab />}
       {tab === 'Records' && <RecordsTab />}
+      {tab === 'Volume Trend' && <VolumeTrendTab />}
+      {tab === 'Balance' && <BalanceTab />}
+      {tab === 'Body Comp' && <BodyCompTab />}
     </div>
   );
 }
@@ -330,6 +362,211 @@ function RecordsTab() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Volume Trend ──────────────────────────────────────────────────── */
+function VolumeTrendTab() {
+  const { data, isLoading } = useQuery<VolumeProgressionPoint[]>({
+    queryKey: ['analytics-volume-progression'],
+    queryFn: analyticsApi.volumeProgression,
+  });
+
+  if (isLoading) return <Spinner />;
+  if (!data?.length) return <div className="text-center py-12 text-slate-500">No volume data yet</div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">Weekly Volume (kg) + 4-Week Rolling Avg</h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <AreaChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id="volGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+            <XAxis dataKey="week" tick={{ fill: '#94a3b8', fontSize: 10 }} />
+            <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
+              labelStyle={{ color: '#cbd5e1' }}
+            />
+            <Area type="monotone" dataKey="total_volume" stroke="#3b82f6" fill="url(#volGrad)" strokeWidth={2} name="Volume (kg)" />
+            <Line type="monotone" dataKey="rolling_avg" stroke="#f97316" strokeWidth={2} strokeDasharray="5 3" dot={false} name="4-wk Avg" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">Workouts per Week</h3>
+        <ResponsiveContainer width="100%" height={180}>
+          <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+            <XAxis dataKey="week" tick={{ fill: '#94a3b8', fontSize: 10 }} />
+            <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} allowDecimals={false} />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
+              labelStyle={{ color: '#cbd5e1' }}
+            />
+            <Bar dataKey="workout_count" fill="#8b5cf6" radius={[3, 3, 0, 0]} name="Workouts" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Balance ───────────────────────────────────────────────────────── */
+function BalanceTab() {
+  const { data, isLoading } = useQuery<MuscleBalanceCategory[]>({
+    queryKey: ['analytics-muscle-balance'],
+    queryFn: analyticsApi.muscleBalance,
+  });
+
+  if (isLoading) return <Spinner />;
+
+  const radarData = (data ?? []).map(d => ({
+    category: d.category.charAt(0).toUpperCase() + d.category.slice(1),
+    sets: d.sets_count,
+  }));
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">Push / Pull / Legs / Core Balance</h3>
+        <ResponsiveContainer width="100%" height={280}>
+          <RadarChart data={radarData}>
+            <PolarGrid stroke="#334155" />
+            <PolarAngleAxis dataKey="category" tick={{ fill: '#94a3b8', fontSize: 12 }} />
+            <PolarRadiusAxis tick={{ fill: '#64748b', fontSize: 10 }} />
+            <Radar name="Sets" dataKey="sets" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.4} />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
+            />
+          </RadarChart>
+        </ResponsiveContainer>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        {(data ?? []).map(cat => (
+          <div
+            key={cat.category}
+            className="bg-slate-800 border border-slate-700 rounded-xl p-4"
+            style={{ borderLeftColor: BALANCE_COLORS[cat.category], borderLeftWidth: 3 }}
+          >
+            <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{cat.category}</p>
+            <p className="text-xl font-bold text-white">
+              {cat.sets_count} <span className="text-sm font-normal text-slate-400">sets</span>
+            </p>
+            <p className="text-xs text-slate-500 mt-0.5">{cat.percentage}%</p>
+            {cat.exercises.length > 0 && (
+              <p className="text-xs text-slate-500 mt-1 truncate">{cat.exercises.join(', ')}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">Sets by Category</h3>
+        <div className="space-y-3">
+          {(data ?? []).map(cat => (
+            <div key={cat.category} className="flex items-center gap-3">
+              <span className="text-slate-300 text-sm w-16 capitalize">{cat.category}</span>
+              <div className="flex-1 bg-slate-700 rounded-full h-2">
+                <div
+                  className="h-2 rounded-full transition-all"
+                  style={{ width: `${cat.percentage}%`, backgroundColor: BALANCE_COLORS[cat.category] }}
+                />
+              </div>
+              <span className="text-slate-400 text-xs w-24 text-right">
+                {cat.sets_count} sets ({cat.percentage}%)
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Body Comp ─────────────────────────────────────────────────────── */
+function BodyCompTab() {
+  const { data, isLoading } = useQuery<BodyCompositionPoint[]>({
+    queryKey: ['analytics-body-composition'],
+    queryFn: analyticsApi.bodyComposition,
+  });
+
+  if (isLoading) return <Spinner />;
+  if (!data?.length) return <div className="text-center py-12 text-slate-500">No body metrics logged yet</div>;
+
+  const latest = data[data.length - 1];
+  const bmiLabel =
+    latest.bmi == null ? null
+    : latest.bmi < 18.5 ? 'Underweight'
+    : latest.bmi < 25 ? 'Normal'
+    : latest.bmi < 30 ? 'Overweight'
+    : 'Obese';
+  const bmiColorClass =
+    latest.bmi == null ? ''
+    : latest.bmi < 18.5 ? 'bg-blue-500/20 text-blue-400'
+    : latest.bmi < 25 ? 'bg-green-500/20 text-green-400'
+    : latest.bmi < 30 ? 'bg-yellow-500/20 text-yellow-400'
+    : 'bg-red-500/20 text-red-400';
+
+  return (
+    <div className="space-y-6">
+      {bmiLabel && latest.bmi != null && (
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-slate-400 text-sm">Latest BMI:</span>
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${bmiColorClass}`}>
+            {latest.bmi.toFixed(1)} — {bmiLabel}
+          </span>
+          {latest.weight_kg && (
+            <span className="text-slate-400 text-sm">{latest.weight_kg} kg</span>
+          )}
+        </div>
+      )}
+
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4">Weight &amp; Body Fat (last 90 days)</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <ComposedChart data={data} margin={{ top: 4, right: 40, bottom: 0, left: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+            <XAxis dataKey="date" tick={{ fill: '#94a3b8', fontSize: 10 }} tickFormatter={d => d.slice(5)} />
+            <YAxis yAxisId="weight" tick={{ fill: '#94a3b8', fontSize: 11 }} unit=" kg" />
+            <YAxis yAxisId="fat" orientation="right" tick={{ fill: '#94a3b8', fontSize: 11 }} unit="%" />
+            <Tooltip
+              contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: 8 }}
+              labelStyle={{ color: '#cbd5e1' }}
+            />
+            <Line
+              yAxisId="weight"
+              type="monotone"
+              dataKey="weight_kg"
+              stroke="#3b82f6"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              name="Weight (kg)"
+              connectNulls
+            />
+            <Line
+              yAxisId="fat"
+              type="monotone"
+              dataKey="body_fat_pct"
+              stroke="#f97316"
+              strokeWidth={2}
+              dot={{ r: 3 }}
+              strokeDasharray="4 2"
+              name="Body Fat %"
+              connectNulls
+            />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
