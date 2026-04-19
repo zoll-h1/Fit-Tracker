@@ -113,6 +113,15 @@ export interface Notification {
   created_at: string;
 }
 
+export interface NotificationSettings {
+  workout_reminders: boolean;
+  streak_alerts: boolean;
+  achievement_alerts: boolean;
+  social_alerts: boolean;
+  challenge_alerts: boolean;
+  email_notifications: boolean;
+}
+
 export const notificationsApi = {
   list: (unread_only = false): Promise<Notification[]> =>
     apiClient.get<Notification[]>(`/api/notifications?unread_only=${unread_only}`).then(r => r.data),
@@ -128,4 +137,10 @@ export const notificationsApi = {
 
   delete: (id: number): Promise<void> =>
     apiClient.delete(`/api/notifications/${id}`).then(() => undefined),
+
+  settings: (): Promise<NotificationSettings> =>
+    apiClient.get<NotificationSettings>('/api/notifications/settings').then(r => r.data),
+
+  updateSettings: (data: Partial<NotificationSettings>): Promise<NotificationSettings> =>
+    apiClient.put<NotificationSettings>('/api/notifications/settings', data).then(r => r.data),
 };

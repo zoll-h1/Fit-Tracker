@@ -18,6 +18,8 @@ import SocialFeedPage from '@/pages/social/SocialFeedPage'
 import PublicProfilePage from '@/pages/social/PublicProfilePage'
 import ChallengesPage from '@/pages/challenges/ChallengesPage'
 import ChallengeDetailPage from '@/pages/challenges/ChallengeDetailPage'
+import NotificationsPage from '@/pages/notifications/NotificationsPage'
+import SettingsPage from '@/pages/settings/SettingsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -63,8 +65,9 @@ export default function App() {
               <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/challenges" element={<ChallengesPage />} />
               <Route path="/challenges/:id" element={<ChallengeDetailPage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
               <Route path="/profile" element={<ComingSoon name="Profile" />} />
-              <Route path="/settings" element={<ComingSoon name="Settings" />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>
 

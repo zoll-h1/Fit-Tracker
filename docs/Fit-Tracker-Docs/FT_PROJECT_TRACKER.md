@@ -247,22 +247,26 @@ All Week 7 tasks completed on 2026-04-19
 
 ### WEEK 8 — Admin + Notifications
 ```
-[ ] Admin auth (session-based)
-[ ] Admin dashboard page + stats
-[ ] Admin user management
-[ ] Admin exercise library management
-[ ] Admin reports queue
-[ ] Admin logs
+[x] Admin auth (session-based)
+[x] Admin dashboard page + stats
+[x] Admin user management
+[x] Admin exercise library management
+[x] Admin reports queue
+[x] Admin logs
 
-[ ] Notification model + all trigger points
-[ ] Notification settings model
-[ ] Streak warning daily job
-[ ] GET/PUT notification endpoints
+[x] Notification model + all trigger points
+[x] Notification settings model
+[x] Streak warning daily job
+[x] GET/PUT notification endpoints
 
-[ ] Notifications bell + dropdown (frontend)
-[ ] Notifications page
-[ ] Notification settings in profile
+[x] Notifications bell + dropdown (frontend)
+[x] Notifications page
+[x] Notification settings in profile
 ```
+
+> Week 8 completed 2026-04-19 — 20/20 tests passing
+> Admin panel: FastAPI + Jinja2 server-side rendered dashboard at /admin (cookie auth, user management, exercise library, logs)
+> Notifications frontend: live bell with unread badge + dropdown in TopBar, NotificationsPage, SettingsPage
 
 ---
 
@@ -451,7 +455,7 @@ _______________________________________________
     Date: _______________
 
 [ ] Phase 2 complete
-    Date: _______________
+    Date: 2026-04-19
 
 [ ] App deployed publicly
     Date: _______________

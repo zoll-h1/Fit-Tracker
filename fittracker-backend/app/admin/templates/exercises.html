@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Exercises{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="text-white mb-0">🏋️ Exercise Library ({{ total }})</h4>
+</div>
+{% if message %}<div class="alert alert-success">{{ message }}</div>{% endif %}
+<form method="POST" action="/admin/exercises" class="card p-3 mb-4">
+  <div class="row g-2">
+    <div class="col-md-3"><input type="text" name="name" placeholder="Exercise name *" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;" required></div>
+    <div class="col-md-2"><input type="text" name="muscle_primary" placeholder="Primary muscle" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;"></div>
+    <div class="col-md-2">
+      <select name="category" class="form-select" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+        <option value="strength">Strength</option>
+        <option value="cardio">Cardio</option>
+        <option value="flexibility">Flexibility</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select name="difficulty" class="form-select" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+        <option value="beginner">Beginner</option>
+        <option value="intermediate">Intermediate</option>
+        <option value="advanced">Advanced</option>
+      </select>
+    </div>
+    <div class="col-md-3"><button type="submit" class="btn w-100" style="background:#7c3aed; color:white;">Add Exercise</button></div>
+  </div>
+</form>
+<div class="card">
+  <table class="table table-dark table-hover mb-0">
+    <thead><tr><th>ID</th><th>Name</th><th>Category</th><th>Primary Muscle</th><th>Difficulty</th></tr></thead>
+    <tbody>
+    {% for ex in exercises[:50] %}
+    <tr><td>{{ ex.id }}</td><td>{{ ex.name }}</td><td>{{ ex.category }}</td><td>{{ ex.muscle_primary or '—' }}</td><td>{{ ex.difficulty }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

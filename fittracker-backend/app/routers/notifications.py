@@ -129,13 +129,15 @@ async def delete_notification(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
+    from fastapi import HTTPException
     result = await db.execute(
         select(Notification).where(Notification.id == notif_id, Notification.user_id == current_user.id)
     )
     notif = result.scalar_one_or_none()
-    if notif:
-        await db.delete(notif)
-        await db.commit()
+    if not notif:
+        raise HTTPException(404, "Notification not found")
+    await db.delete(notif)
+    await db.commit()
 
 
 @router.get("/settings", response_model=NotificationSettingsOut)
