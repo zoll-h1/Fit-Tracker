@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fittracker
+      POSTGRES_PASSWORD: fittracker_pass
+      POSTGRES_DB: fittracker_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fittracker -d fittracker_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./fittracker-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+asyncpg://fittracker:fittracker_pass@db:5432/fittracker_db
+      SECRET_KEY: super-secret-jwt-key-change-in-production-min32chars
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      UPLOAD_DIR: uploads
+      MAX_UPLOAD_SIZE_MB: 5
+      BACKEND_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
+    volumes:
+      - ./fittracker-backend:/app
+      - backend_uploads:/app/uploads
+
+  frontend:
+    build: ./fittracker-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    volumes:
+      - ./fittracker-frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8000
+
+volumes:
+  postgres_data:
+  backend_uploads:

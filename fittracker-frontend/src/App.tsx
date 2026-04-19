@@ -1,0 +1,59 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import AppLayout from '@/components/layout/AppLayout'
+import PrivateRoute from '@/components/layout/PrivateRoute'
+import LoginPage from '@/pages/auth/LoginPage'
+import RegisterPage from '@/pages/auth/RegisterPage'
+import DashboardPage from '@/pages/dashboard/DashboardPage'
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 60 * 5,
+    },
+  },
+})
+
+const ComingSoon = ({ name }: { name: string }) => (
+  <div className="flex items-center justify-center h-64">
+    <div className="text-center">
+      <div className="text-4xl mb-4">🚧</div>
+      <h2 className="text-xl font-semibold text-white mb-2">{name}</h2>
+      <p className="text-slate-400">Coming soon in the next sprint</p>
+    </div>
+  </div>
+)
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ComingSoon name="Forgot Password" />} />
+
+          <Route element={<PrivateRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/workouts" element={<ComingSoon name="Workouts" />} />
+              <Route path="/workouts/active" element={<ComingSoon name="Active Workout" />} />
+              <Route path="/exercises" element={<ComingSoon name="Exercise Library" />} />
+              <Route path="/body-metrics" element={<ComingSoon name="Body Metrics" />} />
+              <Route path="/nutrition" element={<ComingSoon name="Nutrition" />} />
+              <Route path="/analytics" element={<ComingSoon name="Analytics" />} />
+              <Route path="/social" element={<ComingSoon name="Social Feed" />} />
+              <Route path="/achievements" element={<ComingSoon name="Achievements" />} />
+              <Route path="/profile" element={<ComingSoon name="Profile" />} />
+              <Route path="/settings" element={<ComingSoon name="Settings" />} />
+            </Route>
+          </Route>
+
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
+  )
+}

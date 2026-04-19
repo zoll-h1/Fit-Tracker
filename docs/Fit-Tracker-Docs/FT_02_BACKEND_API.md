@@ -284,7 +284,7 @@ Include full CRUD for sessions, exercises within session, and sets.
 | POST   | /api/body-metrics/goals        | Yes  | Set body goals             |
 | GET    | /api/body-metrics/goals        | Yes  | Get current goals          |
 
-### CODEX PROMPT — Body Metrics
+### COPILOT PROMPT — Body Metrics
 ```
 Create FastAPI body metrics module:
 
@@ -328,7 +328,7 @@ Progress endpoint supports: ?metric=weight&from=2025-01-01&to=2025-12-31
 | GET    | /api/nutrition/foods/{id}         | No   | Food detail              |
 | POST   | /api/nutrition/foods/custom       | Yes  | Add custom food          |
 
-### CODEX PROMPT — Nutrition Module
+### COPILOT PROMPT — Nutrition Module
 ```
 Create FastAPI nutrition tracking module:
 
@@ -380,7 +380,7 @@ Seed 200 common foods.
 | POST   | /api/social/challenges/{id}/join  | Yes  | Join challenge                 |
 | GET    | /api/social/leaderboard           | Yes  | Global leaderboard             |
 
-### CODEX PROMPT — Social Module
+### COPILOT PROMPT — Social Module
 ```
 Create FastAPI social module for fitness app:
 
@@ -424,7 +424,7 @@ Auto-post to ActivityFeed when: workout completed, PR achieved, goal reached.
 | GET    | /api/gamification/leaderboard      | Yes  | XP-based leaderboard     |
 | GET    | /api/gamification/streaks          | Yes  | Current & best streaks   |
 
-### CODEX PROMPT — Gamification
+###  COPILOT PROMPT — Gamification
 ```
 Create FastAPI gamification module:
 
@@ -477,7 +477,7 @@ Seed 40 achievements covering all categories.
 | GET    | /api/analytics/streak              | Yes  | Streak calendar data           |
 | GET    | /api/analytics/dashboard           | Yes  | Dashboard summary stats        |
 
-### CODEX PROMPT — Analytics
+### COPILOT PROMPT — Analytics
 ```
 Create FastAPI analytics module:
 
@@ -529,7 +529,7 @@ Use SQLAlchemy aggregate queries (func.sum, func.count, func.max).
 | GET    | /api/notifications/settings         | Yes  | Notification settings |
 | PUT    | /api/notifications/settings         | Yes  | Update settings       |
 
-### CODEX PROMPT — Notifications
+### COPILOT PROMPT — Notifications
 ```
 Create FastAPI notifications module:
 
