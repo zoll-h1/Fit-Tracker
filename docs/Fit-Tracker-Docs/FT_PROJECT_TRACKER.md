@@ -224,16 +224,25 @@ All Week 6 tasks completed on 2026-04-19
 
 ### WEEK 7 — Challenges
 ```
-[ ] Challenge model
-[ ] ChallengeParticipant model
-[ ] Challenge CRUD
-[ ] Challenge progress update job
-[ ] Challenge result logic
+[x] Challenge model
+[x] ChallengeParticipant model
+[x] Challenge CRUD
+[x] Challenge progress update job (APScheduler daily 23:59 + hook in finish_workout)
+[x] Challenge result logic (winner assigned when challenge completed)
 
-[ ] Challenges page
-[ ] Create challenge modal
-[ ] Challenge card with progress
-[ ] Leaderboard view
+[x] Challenges page (Active/Mine/Completed tabs, progress bar, join/leave)
+[x] Create challenge modal (type, target, dates, public toggle)
+[x] Challenge card with progress
+[x] Leaderboard view (ChallengeDetailPage)
+
+Week 7 notes:
+Backend: Challenge/ChallengeParticipant models (migration 007). challenge_service: update_challenge_progress
+(recalculates per user after workout finish), update_leaderboard_ranks. challenges router: CRUD, join/leave,
+leaderboard. APScheduler daily challenge_completion_job at 23:59. Creator auto-joins on create.
+Frontend: src/api/challenges.ts, ChallengesPage (tabs Active/Mine/Completed, CreateChallengeModal, progress bars,
+join/leave), ChallengeDetailPage (stats card, ranked leaderboard table). Routes /challenges and /challenges/:id.
+Tests: 20/20 pytest tests passing.
+All Week 7 tasks completed on 2026-04-19
 ```
 
 ### WEEK 8 — Admin + Notifications

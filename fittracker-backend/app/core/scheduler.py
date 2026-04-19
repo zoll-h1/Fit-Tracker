@@ -40,11 +40,45 @@ async def streak_warning_job() -> None:
         await db.commit()
 
 
+async def challenge_completion_job():
+    """Mark challenges as completed if end_date has passed."""
+    from app.database import AsyncSessionLocal
+    from app.models.challenges import Challenge, ChallengeParticipant
+    from datetime import date
+    from sqlalchemy import select
+    async with AsyncSessionLocal() as db:
+        today = date.today()
+        result = await db.execute(
+            select(Challenge).where(Challenge.status == "active", Challenge.end_date < today)
+        )
+        challenges = result.scalars().all()
+        for challenge in challenges:
+            challenge.status = "completed"
+            winner_result = await db.execute(
+                select(ChallengeParticipant).where(
+                    ChallengeParticipant.challenge_id == challenge.id,
+                    ChallengeParticipant.rank == 1
+                )
+            )
+            winner = winner_result.scalar_one_or_none()
+            if winner:
+                challenge.winner_user_id = winner.user_id
+        await db.commit()
+
+
 def start_scheduler() -> None:
     scheduler.add_job(
         streak_warning_job,
         trigger=CronTrigger(hour=20, minute=0),  # 8 PM daily
         id="streak_warning",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        challenge_completion_job,
+        "cron",
+        hour=23,
+        minute=59,
+        id="challenge_completion",
         replace_existing=True,
     )
     scheduler.start()

@@ -241,6 +241,10 @@ async def finish_workout(
             action_url="/achievements",
         )
 
+    # Update challenge progress
+    from app.services.challenge_service import update_challenge_progress
+    await update_challenge_progress(db, current_user.id)
+
     # Auto-post to activity feed
     from app.models.social import ActivityFeed as ActivityFeedModel
     feed_entry = ActivityFeedModel(

@@ -12,6 +12,7 @@ from app.models.nutrition import Food, MealLog, NutritionGoal
 from app.models.gamification import UserXP, AchievementDefinition, UserAchievement
 from app.models.notification import Notification, NotificationSettings
 from app.models.social import UserFollow, ActivityFeed, FeedLike, FeedComment
+from app.models.challenges import Challenge, ChallengeParticipant
 
 __all__ = [
     "User", "RefreshToken", "UserToken",
@@ -23,4 +24,5 @@ __all__ = [
     "UserXP", "AchievementDefinition", "UserAchievement",
     "Notification", "NotificationSettings",
     "UserFollow", "ActivityFeed", "FeedLike", "FeedComment",
+    "Challenge", "ChallengeParticipant",
 ]

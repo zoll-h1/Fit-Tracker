@@ -11,6 +11,7 @@ from app.routers.nutrition import router as nutrition_router, foods_router
 from app.routers import gamification, analytics, notifications
 from app.routers import templates
 from app.routers.social import router as social_router, users_router
+from app.routers import challenges
 from app.core.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(
@@ -47,6 +48,7 @@ app.include_router(notifications.router)
 app.include_router(templates.router)
 app.include_router(social_router)
 app.include_router(users_router)
+app.include_router(challenges.router)
 
 
 @app.on_event("startup")

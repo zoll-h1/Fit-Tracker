@@ -16,6 +16,8 @@ import AchievementsPage from '@/pages/achievements/AchievementsPage'
 import TemplatesPage from '@/pages/templates/TemplatesPage'
 import SocialFeedPage from '@/pages/social/SocialFeedPage'
 import PublicProfilePage from '@/pages/social/PublicProfilePage'
+import ChallengesPage from '@/pages/challenges/ChallengesPage'
+import ChallengeDetailPage from '@/pages/challenges/ChallengeDetailPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -59,6 +61,8 @@ export default function App() {
               <Route path="/users/:id" element={<PublicProfilePage />} />
               <Route path="/achievements" element={<AchievementsPage />} />
               <Route path="/templates" element={<TemplatesPage />} />
+              <Route path="/challenges" element={<ChallengesPage />} />
+              <Route path="/challenges/:id" element={<ChallengeDetailPage />} />
               <Route path="/profile" element={<ComingSoon name="Profile" />} />
               <Route path="/settings" element={<ComingSoon name="Settings" />} />
             </Route>
