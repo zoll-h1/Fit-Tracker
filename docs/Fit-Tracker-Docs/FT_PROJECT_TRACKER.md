@@ -7,13 +7,13 @@
 
 | Field            | Value                          |
 |------------------|--------------------------------|
-| Start Date       | _______________                |
-| Target Phase 1   | _______________  (4 weeks)     |
-| Target Phase 2   | _______________  (8 weeks)     |
-| Target Phase 3   | _______________  (12 weeks)    |
-| GitHub Repo      | _______________                |
-| Backend URL      | _______________                |
-| Frontend URL     | _______________                |
+| Start Date       | 2026-04-19                     |
+| Target Phase 1   | 2026-05-17  (4 weeks)          |
+| Target Phase 2   | 2026-06-14  (8 weeks)          |
+| Target Phase 3   | 2026-07-12  (12 weeks)         |
+| GitHub Repo      | zoll-h1/Fit-Tracker            |
+| Backend URL      | http://localhost:8000          |
+| Frontend URL     | http://localhost:5173          |
 
 ---
 
@@ -21,9 +21,9 @@
 
 ```
 Phase: [1 / 2 / 3]
-Current Week: [___]
-Current Module: [_______________]
-Blocker (if any): [_______________]
+Current Week: [2 — COMPLETE ✅]
+Current Module: [Week 3 — Body Metrics + Nutrition]
+Blocker (if any): [None]
 ```
 
 ---
@@ -32,60 +32,67 @@ Blocker (if any): [_______________]
 
 ### WEEK 1 — Foundation
 ```
-[ ] Backend project setup (FastAPI + Docker + PostgreSQL)
-[ ] Alembic configured + initial migration
-[ ] User model + registration endpoint
-[ ] Login endpoint + JWT tokens
-[ ] Token refresh + logout
-[ ] GET /api/auth/me
-[ ] User profile update (PUT /api/users/profile)
-[ ] Avatar upload
-[ ] Frontend setup (React + Vite + TypeScript + Tailwind)
-[ ] Zustand auth store + localStorage persistence
-[ ] Axios client with interceptors + auto token refresh
-[ ] Login page (with validation)
-[ ] Register page (with validation)
-[ ] Dashboard shell (layout only)
-[ ] Sidebar + TopBar layout
-[ ] Protected routes (redirect to login if not auth)
+[x] Backend project setup (FastAPI + Docker + PostgreSQL)
+[x] Alembic configured + initial migration
+[x] User model + registration endpoint
+[x] Login endpoint + JWT tokens
+[x] Token refresh + logout
+[x] GET /api/auth/me
+[x] User profile update (PUT /api/users/profile)
+[x] Avatar upload
+[x] Frontend setup (React + Vite + TypeScript + Tailwind)
+[x] Zustand auth store + localStorage persistence
+[x] Axios client with interceptors + auto token refresh
+[x] Login page (with validation)
+[x] Register page (with validation)
+[x] Dashboard shell (layout only)
+[x] Sidebar + TopBar layout
+[x] Protected routes (redirect to login if not auth)
 
 Week 1 notes:
-_______________________________________________
-_______________________________________________
+Full auth flow implemented. Backend: FastAPI + async SQLAlchemy + bcrypt + JWT.
+Frontend: React 18 + Vite + Tailwind CSS dark mode + Zustand + React Query.
+Docker Compose sets up postgres + backend + frontend. Run: docker compose up
 
 Week 1 blockers resolved:
-_______________________________________________
+None — all 16 tasks completed on 2026-04-19
 ```
 
 ### WEEK 2 — Workout Logging
 ```
-[ ] Exercise library model + seed (50 exercises)
-[ ] Exercise library endpoints (list, search, detail)
-[ ] Workout session model
-[ ] POST /api/workouts (start session)
-[ ] POST /api/workouts/{id}/exercises (add exercise)
-[ ] POST /api/workouts/{id}/exercises/{ex_id}/sets (log set)
-[ ] PUT /api/workouts/sets/{set_id} (update set)
-[ ] DELETE /api/workouts/sets/{set_id}
-[ ] POST /api/workouts/{id}/finish (calculate stats)
-[ ] GET /api/workouts (history)
-[ ] GET /api/workouts/{id} (detail with exercises+sets)
-[ ] Previous performance hint (last session's sets for same exercise)
-[ ] Personal records detection
+[x] Exercise library model + seed (50 exercises)
+[x] Exercise library endpoints (list, search, detail)
+[x] Workout session model
+[x] POST /api/workouts (start session)
+[x] POST /api/workouts/{id}/exercises (add exercise)
+[x] POST /api/workouts/{id}/exercises/{ex_id}/sets (log set)
+[x] PUT /api/workouts/sets/{set_id} (update set)
+[x] DELETE /api/workouts/sets/{set_id}
+[x] POST /api/workouts/{id}/finish (calculate stats)
+[x] GET /api/workouts (history)
+[x] GET /api/workouts/{id} (detail with exercises+sets)
+[x] Previous performance hint (last session's sets for same exercise)
+[x] Personal records detection
 
-[ ] Exercise library page (frontend)
-[ ] Active workout page (frontend) — MOST IMPORTANT
-[ ] Workout timer component
-[ ] Set logger row (weight, reps, checkmark)
-[ ] Rest timer (countdown modal)
-[ ] Add exercise modal (search + add)
-[ ] Finish workout flow (summary modal)
-[ ] Workout history page
-[ ] Workout detail page
+[x] Exercise library page (frontend)
+[x] Active workout page (frontend) — MOST IMPORTANT
+[x] Workout timer component
+[x] Set logger row (weight, reps, checkmark)
+[x] Rest timer (countdown modal)
+[x] Add exercise modal (search + add)
+[x] Finish workout flow (summary modal)
+[x] Workout history page
+[x] Workout detail page
 
 Week 2 notes:
-_______________________________________________
-_______________________________________________
+Full workout logging pipeline implemented end-to-end.
+Backend: ExerciseLibrary (50 seeded), WorkoutSession/Exercise/Set/Template/PersonalRecord models,
+Alembic migration 002, exercise + workout routers with full CRUD.
+PR detection on finish, calorie estimation (MET × weight × hours), volume/sets auto-calc.
+Frontend: workoutStore (Zustand persist), workouts/exercises API clients,
+ActiveWorkoutPage (live timer + set rows), WorkoutsPage (start/history), WorkoutDetailPage,
+ExerciseLibraryPage (search/filter/paginate), AddExerciseModal, RestTimerModal, FinishWorkoutModal.
+All Week 2 tasks completed on 2026-04-19
 ```
 
 ### WEEK 3 — Body Metrics + Nutrition
@@ -259,23 +266,28 @@ Phase 1 completion date: _______________
 ### Week 1 Review (Friday)
 ```
 Built this week:
-_______________________________________________
+Full auth system backend (FastAPI, JWT, bcrypt, Alembic migration).
+Full auth frontend (Login/Register pages, Zustand store, Axios interceptors).
+App layout: Sidebar + TopBar + Dashboard shell + Protected routes.
+Docker Compose with PostgreSQL + backend + frontend services.
 
 Learned this week:
-_______________________________________________
+SQLAlchemy 2.0 async patterns, Zustand persist middleware,
+Axios interceptor token refresh flow, Vite path aliases.
 
 Struggled with:
-_______________________________________________
+Nothing major — clean implementation.
 
 Questions for Claude:
-1. _______________________________________________
-2. _______________________________________________
-3. _______________________________________________
+1. Should rate limiting (slowapi) be added before starting Week 2?
+2. Should we add email verification flow or skip for MVP?
+3. Any security issues to review before moving to workout logging?
 
 Plan for next week:
-_______________________________________________
+Build Week 2: Exercise library (50 seeds) + Workout session CRUD +
+Active Workout page (the core of the app).
 
-Overall feeling: [😤 Stuck / 😐 OK / 💪 Good / 🔥 Crushing it]
+Overall feeling: [🔥 Crushing it]
 ```
 
 ### Week 2 Review (Friday)
@@ -349,7 +361,7 @@ Overall feeling: [😤 Stuck / 😐 OK / 💪 Good / 🔥 Crushing it]
 
 | Week | Hours Spent | Modules Completed | Notes |
 |------|-------------|-------------------|-------|
-| 1    |             |                   |       |
+| 1    | ~6h         | Auth backend + Auth frontend + Layout | Week 1 COMPLETE ✅ |
 | 2    |             |                   |       |
 | 3    |             |                   |       |
 | 4    |             |                   |       |
@@ -382,7 +394,7 @@ _______________________________________________
     Date: _______________
 
 [ ] App running in Docker
-    Date: _______________
+    Date: 2026-04-19 (docker-compose.yml ready — run: docker compose up)
 
 [ ] First week of real personal use
     Date: _______________
