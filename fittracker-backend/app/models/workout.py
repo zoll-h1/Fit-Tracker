@@ -34,6 +34,12 @@ class WorkoutSession(Base):
         sa.String(20), default="in_progress", server_default="in_progress", index=True
     )  # in_progress / completed / cancelled
 
+    session_type: Mapped[str] = mapped_column(sa.String(20), default='strength', server_default='strength')
+    distance_km: Mapped[Optional[float]] = mapped_column(sa.Numeric(6, 2))
+    avg_pace_min_km: Mapped[Optional[float]] = mapped_column(sa.Numeric(5, 2))
+    avg_heart_rate: Mapped[Optional[int]] = mapped_column(sa.Integer)
+    max_heart_rate: Mapped[Optional[int]] = mapped_column(sa.Integer)
+
     # Relationships
     exercises: Mapped[list["WorkoutExercise"]] = relationship(
         "WorkoutExercise",
@@ -52,6 +58,7 @@ class WorkoutExercise(Base):
     exercise_order: Mapped[int] = mapped_column(sa.Integer, default=1)
     notes: Mapped[Optional[str]] = mapped_column(sa.Text)
     rest_seconds: Mapped[int] = mapped_column(sa.Integer, default=60, server_default="60")
+    superset_group: Mapped[Optional[int]] = mapped_column(sa.Integer)
 
     # Relationships
     session: Mapped["WorkoutSession"] = relationship("WorkoutSession", back_populates="exercises")

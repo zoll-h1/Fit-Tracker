@@ -17,6 +17,7 @@ export interface Exercise {
   is_custom: boolean;
   met_value: number;
   created_at: string;
+  created_by_user_id: number | null;
 }
 
 export interface ExerciseListResponse {
@@ -47,4 +48,10 @@ export const exercisesApi = {
 
   get: (id: number): Promise<Exercise> =>
     apiClient.get<Exercise>(`/api/exercises/${id}`).then(r => r.data),
+
+  createCustom: (data: { name: string; muscle_primary?: string; category: string; difficulty: string; description?: string; video_url?: string }): Promise<Exercise> =>
+    apiClient.post<Exercise>('/api/exercises/custom', data).then(r => r.data),
+
+  listCustom: (): Promise<Exercise[]> =>
+    apiClient.get<Exercise[]>('/api/exercises/custom').then(r => r.data),
 };

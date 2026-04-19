@@ -1,6 +1,8 @@
 from typing import Optional
+import re
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,6 +13,65 @@ from app.models.user import User
 from app.schemas.exercise import ExerciseListResponse, ExerciseResponse
 
 router = APIRouter(prefix="/api/exercises", tags=["exercises"])
+
+
+class CustomExerciseCreate(BaseModel):
+    name: str
+    muscle_primary: Optional[str] = None
+    category: str = 'strength'
+    difficulty: str = 'intermediate'
+    description: Optional[str] = None
+    video_url: Optional[str] = None
+
+
+@router.post("/custom", response_model=ExerciseResponse, status_code=201)
+async def create_custom_exercise(
+    body: CustomExerciseCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Create a custom exercise for the current user."""
+    base_slug = re.sub(r'[^a-z0-9]+', '-', body.name.lower()).strip('-') + f'-{current_user.id}'
+
+    # Ensure uniqueness by appending counter if collision
+    slug = base_slug
+    counter = 2
+    while True:
+        existing = await db.execute(select(ExerciseLibrary).where(ExerciseLibrary.slug == slug))
+        if not existing.scalar_one_or_none():
+            break
+        slug = f'{base_slug}-{counter}'
+        counter += 1
+
+    exercise = ExerciseLibrary(
+        name=body.name,
+        slug=slug,
+        muscle_primary=body.muscle_primary,
+        category=body.category,
+        difficulty=body.difficulty,
+        description=body.description,
+        video_url=body.video_url,
+        is_custom=True,
+        created_by_user_id=current_user.id,
+    )
+    db.add(exercise)
+    await db.commit()
+    await db.refresh(exercise)
+    return ExerciseResponse.model_validate(exercise)
+
+
+@router.get("/custom", response_model=list[ExerciseResponse])
+async def get_custom_exercises(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Return the current user's custom exercises."""
+    result = await db.execute(
+        select(ExerciseLibrary)
+        .where(ExerciseLibrary.created_by_user_id == current_user.id)
+        .order_by(ExerciseLibrary.name)
+    )
+    return [ExerciseResponse.model_validate(ex) for ex in result.scalars().all()]
 
 
 @router.get("", response_model=ExerciseListResponse)

@@ -56,6 +56,55 @@ async def _get_session_for_user(
     return session  # type: ignore[return-value]
 
 
+# ─── Superset & Cardio sub-resource endpoints (defined before /{session_id}) ──
+
+class CardioUpdateRequest(BaseModel):
+    session_type: str | None = None
+    distance_km: float | None = None
+    avg_pace_min_km: float | None = None
+    avg_heart_rate: int | None = None
+    max_heart_rate: int | None = None
+
+
+class SupersetGroupRequest(BaseModel):
+    superset_group: int | None = None
+
+
+@router.patch("/exercises/{exercise_id}/superset", response_model=WorkoutExerciseResponse)
+async def set_superset_group(
+    exercise_id: int,
+    body: SupersetGroupRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Set or clear the superset group for a workout exercise."""
+    result = await db.execute(
+        select(WorkoutExercise).where(WorkoutExercise.id == exercise_id)
+    )
+    we = result.scalar_one_or_none()
+    if not we:
+        _not_found("Workout exercise not found")
+
+    # Verify ownership via session
+    session_result = await db.execute(
+        select(WorkoutSession).where(
+            WorkoutSession.id == we.session_id,  # type: ignore[union-attr]
+            WorkoutSession.user_id == current_user.id,
+        )
+    )
+    if not session_result.scalar_one_or_none():
+        _not_found("Workout exercise not found")
+
+    we.superset_group = body.superset_group  # type: ignore[union-attr]
+    await db.commit()
+
+    result2 = await db.execute(
+        select(WorkoutExercise)
+        .where(WorkoutExercise.id == exercise_id)
+        .options(selectinload(WorkoutExercise.sets))
+    )
+    return WorkoutExerciseResponse.model_validate(result2.scalar_one())
+
 # ─── Sessions ─────────────────────────────────────────────────────────────────
 
 @router.post("", response_model=WorkoutSessionResponse, status_code=201)
@@ -71,6 +120,7 @@ async def start_workout(
         notes=body.notes,
         template_id=body.template_id,
         status="in_progress",
+        session_type=body.session_type,
     )
     db.add(session)
     await db.commit()
@@ -141,6 +191,30 @@ async def update_workout(
         session.name = body.name
     if body.notes is not None:
         session.notes = body.notes
+    await db.commit()
+    session_refreshed = await _get_session_for_user(session_id, current_user.id, db, load_relations=True)
+    return WorkoutSessionResponse.model_validate(session_refreshed)
+
+
+@router.patch("/{session_id}/cardio", response_model=WorkoutSessionResponse)
+async def update_cardio_data(
+    session_id: int,
+    body: CardioUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Update cardio-specific fields on a workout session."""
+    session = await _get_session_for_user(session_id, current_user.id, db)
+    if body.session_type is not None:
+        session.session_type = body.session_type
+    if body.distance_km is not None:
+        session.distance_km = body.distance_km
+    if body.avg_pace_min_km is not None:
+        session.avg_pace_min_km = body.avg_pace_min_km
+    if body.avg_heart_rate is not None:
+        session.avg_heart_rate = body.avg_heart_rate
+    if body.max_heart_rate is not None:
+        session.max_heart_rate = body.max_heart_rate
     await db.commit()
     session_refreshed = await _get_session_for_user(session_id, current_user.id, db, load_relations=True)
     return WorkoutSessionResponse.model_validate(session_refreshed)

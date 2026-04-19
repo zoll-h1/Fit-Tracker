@@ -188,8 +188,20 @@ export default function WorkoutDetailPage() {
       <div className="space-y-4">
         <h2 className="text-lg font-semibold text-white">Exercises</h2>
         {session.exercises.map((we) => (
-          <div key={we.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4">
-            <h3 className="font-semibold text-white mb-3">Exercise #{we.exercise_order}</h3>
+          <div
+            key={we.id}
+            className={`bg-slate-800 border rounded-xl p-4 ${
+              we.superset_group != null ? 'border-amber-500/40' : 'border-slate-700'
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <h3 className="font-semibold text-white">Exercise #{we.exercise_order}</h3>
+              {we.superset_group != null && (
+                <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded">
+                  Superset {we.superset_group}
+                </span>
+              )}
+            </div>
             <div className="space-y-2">
               <div className="grid grid-cols-4 text-xs text-slate-500 px-1">
                 <span>Set</span>

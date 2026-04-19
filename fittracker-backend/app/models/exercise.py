@@ -30,6 +30,7 @@ class ExerciseLibrary(Base):
 
     is_custom: Mapped[bool] = mapped_column(sa.Boolean, default=False, server_default=sa.false())
     created_by: Mapped[Optional[int]] = mapped_column(sa.Integer, sa.ForeignKey("users.id", ondelete="SET NULL"))
+    created_by_user_id: Mapped[Optional[int]] = mapped_column(sa.Integer, sa.ForeignKey("users.id", ondelete="SET NULL"))
     met_value: Mapped[float] = mapped_column(sa.Numeric(4, 1), default=5.0, server_default="5.0")
 
     created_at: Mapped[datetime] = mapped_column(

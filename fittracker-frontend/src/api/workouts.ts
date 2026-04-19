@@ -20,6 +20,7 @@ export interface WorkoutExercise {
   exercise_order: number;
   notes: string | null;
   rest_seconds: number;
+  superset_group: number | null;
   sets: WorkoutSet[];
 }
 
@@ -35,6 +36,11 @@ export interface WorkoutSession {
   total_reps: number;
   calories_burned: number | null;
   status: string;
+  session_type: string;
+  distance_km: number | null;
+  avg_pace_min_km: number | null;
+  avg_heart_rate: number | null;
+  max_heart_rate: number | null;
   exercises: WorkoutExercise[];
 }
 
@@ -58,8 +64,8 @@ export interface WorkoutHistoryResponse {
 }
 
 export const workoutsApi = {
-  start: (name: string, template_id?: number): Promise<WorkoutSession> =>
-    apiClient.post<WorkoutSession>('/api/workouts', { name, template_id }).then(r => r.data),
+  start: (name: string, template_id?: number, session_type = 'strength'): Promise<WorkoutSession> =>
+    apiClient.post<WorkoutSession>('/api/workouts', { name, template_id, session_type }).then(r => r.data),
 
   list: (page = 1, per_page = 10, status?: string): Promise<WorkoutHistoryResponse> => {
     const params = new URLSearchParams({ page: String(page), per_page: String(per_page) });
@@ -124,6 +130,12 @@ export const workoutsApi = {
 
   update: (id: number, data: { name?: string; notes?: string }): Promise<WorkoutSession> =>
     apiClient.patch<WorkoutSession>(`/api/workouts/${id}`, data).then(r => r.data),
+
+  updateCardio: (id: number, data: { session_type?: string; distance_km?: number; avg_pace_min_km?: number; avg_heart_rate?: number; max_heart_rate?: number }): Promise<WorkoutSession> =>
+    apiClient.patch<WorkoutSession>(`/api/workouts/${id}/cardio`, data).then(r => r.data),
+
+  setSupersetGroup: (exerciseId: number, supersetGroup: number | null): Promise<void> =>
+    apiClient.patch(`/api/workouts/exercises/${exerciseId}/superset`, { superset_group: supersetGroup }).then(() => undefined),
 
   delete: (id: number): Promise<void> =>
     apiClient.delete(`/api/workouts/${id}`).then(() => undefined),

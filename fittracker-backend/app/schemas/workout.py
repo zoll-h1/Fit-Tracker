@@ -58,6 +58,7 @@ class WorkoutExerciseResponse(BaseModel):
     exercise_order: int
     notes: Optional[str] = None
     rest_seconds: int
+    superset_group: Optional[int] = None
     sets: list[WorkoutSetResponse] = []
 
 
@@ -67,6 +68,7 @@ class WorkoutStartRequest(BaseModel):
     name: str = "Workout"
     template_id: Optional[int] = None
     notes: Optional[str] = None
+    session_type: str = 'strength'
 
 
 class WorkoutFinishRequest(BaseModel):
@@ -87,6 +89,11 @@ class WorkoutSessionResponse(BaseModel):
     total_reps: int
     calories_burned: Optional[int] = None
     status: str
+    session_type: str = 'strength'
+    distance_km: Optional[float] = None
+    avg_pace_min_km: Optional[float] = None
+    avg_heart_rate: Optional[int] = None
+    max_heart_rate: Optional[int] = None
     exercises: list[WorkoutExerciseResponse] = []
 
 

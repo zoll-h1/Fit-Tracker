@@ -23,6 +23,7 @@ class ExerciseResponse(BaseModel):
     is_custom: bool
     met_value: float
     created_at: datetime
+    created_by_user_id: Optional[int] = None
 
 
 class ExerciseListResponse(BaseModel):
