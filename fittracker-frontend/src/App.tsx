@@ -5,6 +5,10 @@ import PrivateRoute from '@/components/layout/PrivateRoute'
 import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
+import WorkoutsPage from '@/pages/workouts/WorkoutsPage'
+import ActiveWorkoutPage from '@/pages/workouts/ActiveWorkoutPage'
+import WorkoutDetailPage from '@/pages/workouts/WorkoutDetailPage'
+import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,9 +41,10 @@ export default function App() {
           <Route element={<PrivateRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/workouts" element={<ComingSoon name="Workouts" />} />
-              <Route path="/workouts/active" element={<ComingSoon name="Active Workout" />} />
-              <Route path="/exercises" element={<ComingSoon name="Exercise Library" />} />
+              <Route path="/workouts" element={<WorkoutsPage />} />
+              <Route path="/workouts/active" element={<ActiveWorkoutPage />} />
+              <Route path="/workouts/:id" element={<WorkoutDetailPage />} />
+              <Route path="/exercises" element={<ExerciseLibraryPage />} />
               <Route path="/body-metrics" element={<ComingSoon name="Body Metrics" />} />
               <Route path="/nutrition" element={<ComingSoon name="Nutrition" />} />
               <Route path="/analytics" element={<ComingSoon name="Analytics" />} />

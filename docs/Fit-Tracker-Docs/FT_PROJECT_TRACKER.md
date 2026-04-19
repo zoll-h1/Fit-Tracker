@@ -21,8 +21,8 @@
 
 ```
 Phase: [1 / 2 / 3]
-Current Week: [1 — COMPLETE ✅]
-Current Module: [Week 2 — Workout Logging]
+Current Week: [2 — COMPLETE ✅]
+Current Module: [Week 3 — Body Metrics + Nutrition]
 Blocker (if any): [None]
 ```
 
@@ -60,33 +60,39 @@ None — all 16 tasks completed on 2026-04-19
 
 ### WEEK 2 — Workout Logging
 ```
-[ ] Exercise library model + seed (50 exercises)
-[ ] Exercise library endpoints (list, search, detail)
-[ ] Workout session model
-[ ] POST /api/workouts (start session)
-[ ] POST /api/workouts/{id}/exercises (add exercise)
-[ ] POST /api/workouts/{id}/exercises/{ex_id}/sets (log set)
-[ ] PUT /api/workouts/sets/{set_id} (update set)
-[ ] DELETE /api/workouts/sets/{set_id}
-[ ] POST /api/workouts/{id}/finish (calculate stats)
-[ ] GET /api/workouts (history)
-[ ] GET /api/workouts/{id} (detail with exercises+sets)
-[ ] Previous performance hint (last session's sets for same exercise)
-[ ] Personal records detection
+[x] Exercise library model + seed (50 exercises)
+[x] Exercise library endpoints (list, search, detail)
+[x] Workout session model
+[x] POST /api/workouts (start session)
+[x] POST /api/workouts/{id}/exercises (add exercise)
+[x] POST /api/workouts/{id}/exercises/{ex_id}/sets (log set)
+[x] PUT /api/workouts/sets/{set_id} (update set)
+[x] DELETE /api/workouts/sets/{set_id}
+[x] POST /api/workouts/{id}/finish (calculate stats)
+[x] GET /api/workouts (history)
+[x] GET /api/workouts/{id} (detail with exercises+sets)
+[x] Previous performance hint (last session's sets for same exercise)
+[x] Personal records detection
 
-[ ] Exercise library page (frontend)
-[ ] Active workout page (frontend) — MOST IMPORTANT
-[ ] Workout timer component
-[ ] Set logger row (weight, reps, checkmark)
-[ ] Rest timer (countdown modal)
-[ ] Add exercise modal (search + add)
-[ ] Finish workout flow (summary modal)
-[ ] Workout history page
-[ ] Workout detail page
+[x] Exercise library page (frontend)
+[x] Active workout page (frontend) — MOST IMPORTANT
+[x] Workout timer component
+[x] Set logger row (weight, reps, checkmark)
+[x] Rest timer (countdown modal)
+[x] Add exercise modal (search + add)
+[x] Finish workout flow (summary modal)
+[x] Workout history page
+[x] Workout detail page
 
 Week 2 notes:
-_______________________________________________
-_______________________________________________
+Full workout logging pipeline implemented end-to-end.
+Backend: ExerciseLibrary (50 seeded), WorkoutSession/Exercise/Set/Template/PersonalRecord models,
+Alembic migration 002, exercise + workout routers with full CRUD.
+PR detection on finish, calorie estimation (MET × weight × hours), volume/sets auto-calc.
+Frontend: workoutStore (Zustand persist), workouts/exercises API clients,
+ActiveWorkoutPage (live timer + set rows), WorkoutsPage (start/history), WorkoutDetailPage,
+ExerciseLibraryPage (search/filter/paginate), AddExerciseModal, RestTimerModal, FinishWorkoutModal.
+All Week 2 tasks completed on 2026-04-19
 ```
 
 ### WEEK 3 — Body Metrics + Nutrition

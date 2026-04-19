@@ -5,6 +5,7 @@ from pathlib import Path
 
 from app.config import settings
 from app.routers import auth, users
+from app.routers import exercise_library, workouts
 
 app = FastAPI(
     title="FitTracker API",
@@ -29,6 +30,8 @@ app.mount("/uploads", StaticFiles(directory=str(uploads_path)), name="uploads")
 # Routers
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(exercise_library.router)
+app.include_router(workouts.router)
 
 
 @app.get("/health")

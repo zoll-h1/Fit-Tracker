@@ -14,6 +14,7 @@ import {
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { to: '/workouts', icon: Dumbbell, label: 'Workouts' },
+  { to: '/exercises', icon: Dumbbell, label: 'Exercises' },
   { to: '/body-metrics', icon: Scale, label: 'Body' },
   { to: '/nutrition', icon: UtensilsCrossed, label: 'Nutrition' },
   { to: '/analytics', icon: LineChart, label: 'Analytics' },
