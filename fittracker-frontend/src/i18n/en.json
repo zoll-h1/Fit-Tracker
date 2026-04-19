@@ -1,0 +1,60 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "workouts": "Workouts",
+    "exercises": "Exercises",
+    "nutrition": "Nutrition",
+    "body": "Body Metrics",
+    "analytics": "Analytics",
+    "social": "Social",
+    "challenges": "Challenges",
+    "achievements": "Achievements",
+    "trainer": "Trainer",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "thisWeek": "This Week",
+    "streak": "Streak",
+    "totalVolume": "Total Volume",
+    "goalsMet": "Goals Met",
+    "recentWorkouts": "Recent Workouts",
+    "startWorkout": "Start Workout",
+    "viewAll": "View all",
+    "noWorkouts": "No workouts yet",
+    "startFirst": "Start your first workout!"
+  },
+  "workouts": {
+    "title": "Workouts",
+    "history": "Workout History",
+    "startNew": "Start New Workout",
+    "noHistory": "No workout history yet",
+    "duration": "Duration",
+    "volume": "Volume",
+    "sets": "sets",
+    "finish": "Finish Workout",
+    "cancel": "Cancel"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "fullName": "Full Name"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "days": "days",
+    "kg": "kg",
+    "km": "km"
+  }
+}

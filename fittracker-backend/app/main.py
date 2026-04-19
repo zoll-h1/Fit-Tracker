@@ -1,7 +1,12 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
+
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from app.config import settings
 from app.routers import auth, users
@@ -22,6 +27,16 @@ app = FastAPI(
     version="1.0.0",
     description="FitTracker — Your AI-powered fitness companion",
 )
+
+# Sentry (only if DSN is configured)
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+        traces_sample_rate=0.1,
+        environment=os.getenv("ENVIRONMENT", "development"),
+    )
 
 # CORS
 app.add_middleware(
@@ -85,4 +100,4 @@ async def shutdown_event():
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "fittracker-api"}
+    return {"status": "ok", "version": "1.0.0"}

@@ -4,6 +4,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import PrivateRoute from '@/components/layout/PrivateRoute'
 import LoginPage from '@/pages/auth/LoginPage'
 import RegisterPage from '@/pages/auth/RegisterPage'
+import LandingPage from '@/pages/LandingPage'
 import DashboardPage from '@/pages/dashboard/DashboardPage'
 import WorkoutsPage from '@/pages/workouts/WorkoutsPage'
 import ActiveWorkoutPage from '@/pages/workouts/ActiveWorkoutPage'
@@ -49,6 +50,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/landing" element={<LandingPage />} />
           <Route path="/forgot-password" element={<ComingSoon name="Forgot Password" />} />
 
           <Route element={<PrivateRoute />}>

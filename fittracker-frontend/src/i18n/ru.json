@@ -1,0 +1,60 @@
+{
+  "nav": {
+    "dashboard": "Главная",
+    "workouts": "Тренировки",
+    "exercises": "Упражнения",
+    "nutrition": "Питание",
+    "body": "Тело",
+    "analytics": "Аналитика",
+    "social": "Социальное",
+    "challenges": "Челленджи",
+    "achievements": "Достижения",
+    "trainer": "Тренер",
+    "settings": "Настройки"
+  },
+  "dashboard": {
+    "title": "Главная",
+    "thisWeek": "На этой неделе",
+    "streak": "Серия",
+    "totalVolume": "Общий объём",
+    "goalsMet": "Цели выполнены",
+    "recentWorkouts": "Последние тренировки",
+    "startWorkout": "Начать тренировку",
+    "viewAll": "Смотреть все",
+    "noWorkouts": "Тренировок нет",
+    "startFirst": "Начните первую тренировку!"
+  },
+  "workouts": {
+    "title": "Тренировки",
+    "history": "История тренировок",
+    "startNew": "Новая тренировка",
+    "noHistory": "История тренировок пуста",
+    "duration": "Длительность",
+    "volume": "Объём",
+    "sets": "подходов",
+    "finish": "Завершить",
+    "cancel": "Отмена"
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Регистрация",
+    "logout": "Выйти",
+    "email": "Почта",
+    "password": "Пароль",
+    "username": "Имя пользователя",
+    "fullName": "Полное имя"
+  },
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "create": "Создать",
+    "search": "Поиск",
+    "loading": "Загрузка...",
+    "error": "Что-то пошло не так",
+    "days": "дней",
+    "kg": "кг",
+    "km": "км"
+  }
+}

@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Bell, LogOut, X, CheckCheck } from 'lucide-react'
+import { Bell, LogOut, X, CheckCheck, Sun, Moon } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { authApi } from '@/api/auth'
 import { notificationsApi } from '@/api/gamification'
+import { useThemeStore } from '@/store/themeStore'
+import { useTranslation } from 'react-i18next'
 
 export default function TopBar() {
   const navigate = useNavigate()
@@ -12,6 +14,14 @@ export default function TopBar() {
   const [notifOpen, setNotifOpen] = useState(false)
   const notifRef = useRef<HTMLDivElement>(null)
   const qc = useQueryClient()
+  const { theme, toggleTheme } = useThemeStore()
+  const { i18n } = useTranslation()
+
+  const toggleLang = () => {
+    const next = i18n.language === 'en' ? 'ru' : 'en'
+    i18n.changeLanguage(next)
+    localStorage.setItem('fittracker-lang', next)
+  }
 
   // Close on outside click
   useEffect(() => {
@@ -78,6 +88,24 @@ export default function TopBar() {
       <div className="lg:hidden text-white font-bold text-lg">FitTracker</div>
       <div className="hidden lg:block" />
       <div className="flex items-center gap-3">
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition"
+          title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
+
+        {/* Language Toggle */}
+        <button
+          onClick={toggleLang}
+          className="px-2 py-1 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-700 transition"
+          title="Toggle language"
+        >
+          {i18n.language === 'en' ? 'EN' : 'RU'}
+        </button>
+
         {/* Notification Bell */}
         <div className="relative" ref={notifRef}>
           <button

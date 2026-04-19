@@ -35,9 +35,16 @@ services:
       UPLOAD_DIR: uploads
       MAX_UPLOAD_SIZE_MB: 5
       BACKEND_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
+      ENVIRONMENT: production
     volumes:
       - ./fittracker-backend:/app
       - backend_uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   frontend:
     build: ./fittracker-frontend

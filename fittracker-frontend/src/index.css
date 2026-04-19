@@ -14,6 +14,16 @@
   --text-muted: #64748B;
 }
 
+/* Light mode CSS variable overrides */
+.light {
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -29,3 +39,17 @@ body {
 #root {
   min-height: 100vh;
 }
+
+/* Light mode utility class overrides */
+.light body {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+.light .bg-slate-900 { background-color: #ffffff !important; }
+.light .bg-slate-800 { background-color: #f8fafc !important; }
+.light .bg-slate-700 { background-color: #e2e8f0 !important; }
+.light .text-white { color: #0f172a !important; }
+.light .text-slate-400 { color: #475569 !important; }
+.light .text-slate-300 { color: #334155 !important; }
+.light .border-slate-700 { border-color: #cbd5e1 !important; }
+.light .border-slate-800 { border-color: #e2e8f0 !important; }

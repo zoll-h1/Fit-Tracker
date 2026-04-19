@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { Dumbbell, Activity, Scale, TrendingUp, Clock, BarChart3, ChevronRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { workoutsApi } from '@/api/workouts'
 import { gamificationApi } from '@/api/gamification'
 import { formatDistanceToNow, subDays } from 'date-fns'
@@ -15,6 +16,7 @@ function formatDuration(seconds: number | null): string {
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const { data: workoutsData } = useQuery({
     queryKey: ['dashboard-workouts'],
@@ -39,17 +41,17 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-white">{t('dashboard.title')}</h1>
         <p style={{ color: 'var(--text-secondary)' }}>Welcome back! Here's your fitness overview.</p>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'This Week', value: String(thisWeekCount), sub: 'workouts', icon: Dumbbell, color: 'text-blue-400', bg: 'bg-blue-900/30' },
-          { label: 'Total Volume', value: totalVolume != null ? `${Math.round(totalVolume)} kg` : '—', sub: 'all time', icon: Activity, color: 'text-orange-400', bg: 'bg-orange-900/30' },
-          { label: 'Streak', value: String(profile?.current_streak_days ?? 0), sub: 'days', icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-900/30' },
-          { label: 'Goals Met', value: '0%', sub: 'this month', icon: Scale, color: 'text-purple-400', bg: 'bg-purple-900/30' },
+          { label: t('dashboard.thisWeek'), value: String(thisWeekCount), sub: 'workouts', icon: Dumbbell, color: 'text-blue-400', bg: 'bg-blue-900/30' },
+          { label: t('dashboard.totalVolume'), value: totalVolume != null ? `${Math.round(totalVolume)} kg` : '—', sub: 'all time', icon: Activity, color: 'text-orange-400', bg: 'bg-orange-900/30' },
+          { label: t('dashboard.streak'), value: String(profile?.current_streak_days ?? 0), sub: t('common.days'), icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-900/30' },
+          { label: t('dashboard.goalsMet'), value: '0%', sub: 'this month', icon: Scale, color: 'text-purple-400', bg: 'bg-purple-900/30' },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -69,27 +71,27 @@ export default function DashboardPage() {
       {/* Recent Workouts */}
       <div className="rounded-xl p-5 border border-slate-700" style={{ background: 'var(--bg-secondary)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-white">Recent Workouts</h2>
+          <h2 className="text-lg font-semibold text-white">{t('dashboard.recentWorkouts')}</h2>
           {workouts.length > 0 && (
             <button
               onClick={() => navigate('/workouts')}
               className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
             >
-              View all
+              {t('dashboard.viewAll')}
             </button>
           )}
         </div>
         {workouts.length === 0 ? (
           <div className="text-center py-8">
             <Dumbbell className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-            <p className="text-slate-400">No workouts yet</p>
-            <p className="text-sm text-slate-500 mt-1">Start your first workout to see it here</p>
+            <p className="text-slate-400">{t('dashboard.noWorkouts')}</p>
+            <p className="text-sm text-slate-500 mt-1">{t('dashboard.startFirst')}</p>
             <button
               onClick={() => navigate('/workouts')}
               className="mt-4 px-4 py-2 rounded-lg text-sm font-medium text-white transition hover:opacity-90"
               style={{ background: 'var(--primary)' }}
             >
-              Start Workout
+              {t('dashboard.startWorkout')}
             </button>
           </div>
         ) : (
