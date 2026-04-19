@@ -160,6 +160,17 @@ async def check_achievements(
             # Award XP for this achievement
             await award_xp(db, user_id, defn.xp_reward, f"achievement:{defn.key}")
 
+            # Post to activity feed
+            from app.models.social import ActivityFeed as ActivityFeedModel
+            feed_entry = ActivityFeedModel(
+                user_id=user_id,
+                activity_type="achievement",
+                ref_id=defn.id,
+                title=f"Earned achievement: {defn.name}",
+                body=defn.description,
+            )
+            db.add(feed_entry)
+
             newly_earned.append({
                 "key": defn.key,
                 "name": defn.name,

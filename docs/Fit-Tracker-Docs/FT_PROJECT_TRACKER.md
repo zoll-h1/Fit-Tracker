@@ -198,18 +198,28 @@ All Week 5 tasks completed on 2026-04-19
 
 ### WEEK 6 — Social Features
 ```
-[ ] Follow/unfollow endpoints
-[ ] ActivityFeed model + auto-post triggers
-[ ] Feed likes + comments endpoints
-[ ] Public profile endpoint
-[ ] User search endpoint
+[x] Follow/unfollow endpoints
+[x] ActivityFeed model + auto-post triggers (workout finish + achievement earned)
+[x] Feed likes + comments endpoints
+[x] Public profile endpoint (no email)
+[x] User search endpoint
 
-[ ] Social feed page
-[ ] Activity cards (3 types)
-[ ] Like/comment interactions
-[ ] Public profile page
-[ ] Follow/unfollow button
-[ ] Followers list page
+[x] Social feed page (feed with like/comment interactions)
+[x] Activity cards (workout/achievement types)
+[x] Like/comment interactions
+[x] Public profile page
+[x] Follow/unfollow button
+[x] Followers list page (/api/social/followers + /following)
+
+Week 6 notes:
+Backend: UserFollow, ActivityFeed, FeedLike, FeedComment models (migration 006). ActivityFeed auto-created on
+workout finish (in workouts router) and achievement earned (in gamification_service). Social router: follow/unfollow,
+paginated feed (followed users + self), like toggle, comments CRUD, public profile (no email), user search.
+Two routers: social_router (/api/social/) and users_router (/api/users/).
+Frontend: src/api/social.ts, SocialFeedPage (feed with like toggle + expandable comments + user search),
+PublicProfilePage (stats + follow/unfollow). Routes /social and /users/:id wired in App.tsx.
+Tests: 20/20 pytest tests passing.
+All Week 6 tasks completed on 2026-04-19
 ```
 
 ### WEEK 7 — Challenges

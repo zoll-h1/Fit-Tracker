@@ -14,6 +14,8 @@ import NutritionPage from '@/pages/nutrition/NutritionPage'
 import AnalyticsPage from '@/pages/analytics/AnalyticsPage'
 import AchievementsPage from '@/pages/achievements/AchievementsPage'
 import TemplatesPage from '@/pages/templates/TemplatesPage'
+import SocialFeedPage from '@/pages/social/SocialFeedPage'
+import PublicProfilePage from '@/pages/social/PublicProfilePage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,7 +55,8 @@ export default function App() {
               <Route path="/body-metrics" element={<BodyMetricsPage />} />
               <Route path="/nutrition" element={<NutritionPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/social" element={<ComingSoon name="Social Feed" />} />
+              <Route path="/social" element={<SocialFeedPage />} />
+              <Route path="/users/:id" element={<PublicProfilePage />} />
               <Route path="/achievements" element={<AchievementsPage />} />
               <Route path="/templates" element={<TemplatesPage />} />
               <Route path="/profile" element={<ComingSoon name="Profile" />} />

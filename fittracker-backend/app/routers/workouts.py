@@ -241,6 +241,19 @@ async def finish_workout(
             action_url="/achievements",
         )
 
+    # Auto-post to activity feed
+    from app.models.social import ActivityFeed as ActivityFeedModel
+    feed_entry = ActivityFeedModel(
+        user_id=current_user.id,
+        activity_type="workout",
+        ref_id=session.id,
+        title=f"Completed workout: {session.name}",
+        body=f"{session.total_sets} sets · {int(float(session.total_volume_kg or 0))} kg volume"
+             + (f" · {session.duration_seconds // 60} min" if session.duration_seconds else ""),
+    )
+    db.add(feed_entry)
+    await db.flush()
+
     await db.commit()
 
     result = await db.execute(
