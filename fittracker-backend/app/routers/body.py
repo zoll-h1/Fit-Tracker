@@ -17,6 +17,8 @@ from app.schemas.body import (
     BodyMetricHistoryResponse,
     BodyMetricResponse,
 )
+from app.services import gamification_service
+from app.services.notification_service import create_notification
 
 router = APIRouter(prefix="/api/body", tags=["body"])
 
@@ -71,6 +73,7 @@ async def log_metric(
         current_user.weight_kg = body.weight_kg  # type: ignore[attr-defined]
 
     # Auto-update body goals current_value and check completion
+    goal_reached = False
     if body.weight_kg:
         goals_result = await db.execute(
             select(BodyGoal).where(
@@ -87,6 +90,18 @@ async def log_metric(
             ):
                 goal.status = "completed"
                 goal.completed_at = datetime.now(timezone.utc)
+                goal_reached = True
+
+    await db.flush()
+
+    # Gamification
+    await gamification_service.award_xp(db, current_user.id, gamification_service.XP_AWARDS["log_body_metric"], "log_body_metric")
+    if goal_reached:
+        await gamification_service.award_xp(db, current_user.id, gamification_service.XP_AWARDS["goal_reached"], "goal_reached")
+        await create_notification(db, current_user.id, "goal_reached", "🎯 Goal Reached!", "You hit a body goal. Keep it up!", action_url="/body-metrics")
+    new_achievements = await gamification_service.check_achievements(db, current_user.id, "body_metric")
+    for ach in new_achievements:
+        await create_notification(db, current_user.id, "achievement_earned", "🏆 Achievement Unlocked!", f"{ach['name']} (+{ach['xp_reward']} XP)", action_url="/achievements")
 
     await db.commit()
     await db.refresh(metric)

@@ -21,8 +21,8 @@
 
 ```
 Phase: [1 / 2 / 3]
-Current Week: [3 — COMPLETE ✅]
-Current Module: [Week 4 — Gamification + Analytics]
+Current Week: [4 — COMPLETE ✅]
+Current Module: [Phase 1 Complete → Week 5 — Workout Templates]
 Blocker (if any): [None]
 ```
 
@@ -127,34 +127,47 @@ All Week 3 tasks completed on 2026-04-19
 
 ### WEEK 4 — Gamification + Analytics
 ```
-[ ] UserXP model + table
-[ ] Achievement definitions (40) seeded
-[ ] XP award service
-[ ] Level system (10 levels + names)
-[ ] Streak tracking logic
-[ ] Achievement checker service
-[ ] Gamification triggered after workout finish
-[ ] Gamification triggered after PR
-[ ] Gamification triggered after goal reached
-[ ] APScheduler setup (streak warning job)
-[ ] Analytics dashboard query
-[ ] Strength progress query
-[ ] Muscle distribution query
-[ ] PR query
-[ ] Streak calendar query
+[x] UserXP model + table
+[x] Achievement definitions (40) seeded
+[x] XP award service
+[x] Level system (10 levels + names)
+[x] Streak tracking logic
+[x] Achievement checker service
+[x] Gamification triggered after workout finish
+[x] Gamification triggered after PR
+[x] Gamification triggered after goal reached
+[x] APScheduler setup (streak warning job)
+[x] Analytics dashboard query
+[x] Strength progress query
+[x] Muscle distribution query
+[x] PR query
+[x] Streak calendar query
 
-[ ] XP bar in header/sidebar
-[ ] Level badge component
-[ ] Achievements page (grid)
-[ ] Achievement unlock animation
-[ ] Analytics page (5 tabs)
-[ ] Strength chart (Recharts LineChart)
-[ ] Volume chart (BarChart)
-[ ] Calendar heatmap (365 days)
-[ ] PR table
+[x] XP bar in header/sidebar
+[x] Level badge component
+[x] Achievements page (grid)
+[x] Achievement unlock animation
+[x] Analytics page (5 tabs)
+[x] Strength chart (Recharts LineChart)
+[x] Volume chart (BarChart)
+[x] Calendar heatmap (365 days)
+[x] PR table
 
-PHASE 1 COMPLETE? [ ] Yes / [ ] Not yet
-Phase 1 completion date: _______________
+Week 4 notes:
+Backend: UserXP/AchievementDefinition/UserAchievement models (migration 004), Notification/NotificationSettings
+models (migration 005). 40 achievements seeded across 6 categories. gamification_service: award_xp, update_streak,
+check_achievements, 10-level system. notification_service: per-type settings check. APScheduler daily streak warning
+at 8PM. Routers: gamification (/profile, /achievements, /leaderboard, /streaks), analytics (/dashboard, /strength,
+/volume, /muscles, /personal-records, /streak, /workouts), notifications (full CRUD + settings). Gamification hooks
+added to workout finish, PR detection, goal reached, meal/body log. workout status fixed to "finished" for analytics.
+Frontend: gamification.ts API client (gamification + analytics + notifications). Sidebar XP bar with live level badge,
+streak indicator. AchievementsPage (40-achievement grid, rarity colors, category filter, XP progress card).
+AnalyticsPage (5 tabs: Overview with stats + heatmap + recent PRs, Strength LineChart, Volume BarChart, Muscles pie,
+Records table). CalendarHeatmap component (GitHub-style, 365-day grid). Frontend build: ✓ clean.
+All Week 4 tasks completed on 2026-04-19
+
+PHASE 1 COMPLETE? [x] Yes / [ ] Not yet
+Phase 1 completion date: 2026-04-19
 ```
 
 ---

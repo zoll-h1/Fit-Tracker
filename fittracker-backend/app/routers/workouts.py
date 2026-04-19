@@ -23,6 +23,8 @@ from app.schemas.workout import (
     WorkoutSetUpdate,
     WorkoutStartRequest,
 )
+from app.services import gamification_service
+from app.services.notification_service import create_notification
 
 router = APIRouter(prefix="/api/workouts", tags=["workouts"])
 
@@ -145,7 +147,7 @@ async def finish_workout(
 
     now = datetime.now(timezone.utc)
     session.finished_at = now  # type: ignore[union-attr]
-    session.status = "completed"  # type: ignore[union-attr]
+    session.status = "finished"  # type: ignore[union-attr]
 
     started = session.started_at  # type: ignore[union-attr]
     if started.tzinfo is None:
@@ -208,6 +210,35 @@ async def finish_workout(
                     )
                     db.add(new_pr)
                 ws.is_pr = True
+
+    await db.flush()
+
+    # Gamification: award XP, update streak, check achievements
+    await gamification_service.award_xp(db, current_user.id, gamification_service.XP_AWARDS["complete_workout"], "complete_workout")
+    streak_result = await gamification_service.update_streak(db, current_user.id)
+
+    # Extra XP for any new PRs this session
+    pr_count_this_session = sum(
+        1 for we in session.exercises  # type: ignore[union-attr]
+        for ws in we.sets if ws.is_pr
+    )
+    if pr_count_this_session:
+        await gamification_service.award_xp(
+            db, current_user.id,
+            gamification_service.XP_AWARDS["pr_achieved"] * pr_count_this_session,
+            "pr_achieved"
+        )
+
+    new_achievements = await gamification_service.check_achievements(db, current_user.id, "workout_finish")
+
+    # Notify for new achievements
+    for ach in new_achievements:
+        await create_notification(
+            db, current_user.id, "achievement_earned",
+            f"🏆 Achievement Unlocked!",
+            f"{ach['name']} — {ach['description']} (+{ach['xp_reward']} XP)",
+            action_url="/achievements",
+        )
 
     await db.commit()
 

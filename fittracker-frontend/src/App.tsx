@@ -11,6 +11,8 @@ import WorkoutDetailPage from '@/pages/workouts/WorkoutDetailPage'
 import ExerciseLibraryPage from '@/pages/exercises/ExerciseLibraryPage'
 import BodyMetricsPage from '@/pages/body/BodyMetricsPage'
 import NutritionPage from '@/pages/nutrition/NutritionPage'
+import AnalyticsPage from '@/pages/analytics/AnalyticsPage'
+import AchievementsPage from '@/pages/achievements/AchievementsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,9 +51,9 @@ export default function App() {
               <Route path="/exercises" element={<ExerciseLibraryPage />} />
               <Route path="/body-metrics" element={<BodyMetricsPage />} />
               <Route path="/nutrition" element={<NutritionPage />} />
-              <Route path="/analytics" element={<ComingSoon name="Analytics" />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/social" element={<ComingSoon name="Social Feed" />} />
-              <Route path="/achievements" element={<ComingSoon name="Achievements" />} />
+              <Route path="/achievements" element={<AchievementsPage />} />
               <Route path="/profile" element={<ComingSoon name="Profile" />} />
               <Route path="/settings" element={<ComingSoon name="Settings" />} />
             </Route>

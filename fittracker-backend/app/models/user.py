@@ -61,6 +61,9 @@ class User(Base):
     user_tokens: Mapped[list["UserToken"]] = relationship(
         "UserToken", back_populates="user", cascade="all, delete-orphan"
     )
+    xp_record: Mapped["UserXP | None"] = relationship(  # type: ignore[name-defined]
+        "UserXP", back_populates="user", uselist=False, cascade="all, delete-orphan"
+    )
 
 
 class RefreshToken(Base):

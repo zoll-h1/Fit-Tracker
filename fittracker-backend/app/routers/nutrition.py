@@ -21,6 +21,8 @@ from app.schemas.nutrition import (
     WeeklyAdherenceResponse,
     WeeklyDayAdherence,
 )
+from app.services import gamification_service
+from app.services.notification_service import create_notification
 
 router = APIRouter(prefix="/api/nutrition", tags=["nutrition"])
 foods_router = APIRouter(prefix="/api/foods", tags=["foods"])
@@ -103,6 +105,14 @@ async def log_meal(
         fiber_g=round(float(food.fiber_g) * factor, 2),
     )
     db.add(log)
+    await db.flush()
+
+    # Gamification: +10 XP for logging a meal
+    await gamification_service.award_xp(db, current_user.id, gamification_service.XP_AWARDS["log_meal"], "log_meal")
+    new_achievements = await gamification_service.check_achievements(db, current_user.id, "meal_log")
+    for ach in new_achievements:
+        await create_notification(db, current_user.id, "achievement_earned", "🏆 Achievement Unlocked!", f"{ach['name']} (+{ach['xp_reward']} XP)", action_url="/achievements")
+
     await db.commit()
     await db.refresh(log)
     return MealLogResponse.model_validate(log)
