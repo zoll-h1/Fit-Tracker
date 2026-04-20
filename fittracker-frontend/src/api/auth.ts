@@ -30,6 +30,15 @@ export const authApi = {
     const res = await apiClient.patch('/api/auth/me', data)
     return res.data
   },
+
+  uploadAvatar: async (file: File): Promise<User> => {
+    const form = new FormData()
+    form.append('file', file)
+    const res = await apiClient.post('/api/auth/me/avatar', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return res.data
+  },
 }
 
 export const usersApi = {

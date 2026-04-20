@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Edit2, Save, X, Dumbbell, Flame, Trophy, Activity } from 'lucide-react';
+import { Camera, Edit2, Save, X, Dumbbell, Flame, Trophy, Activity } from 'lucide-react';
 import { authApi } from '@/api/auth';
 import { gamificationApi } from '@/api/gamification';
 import { workoutsApi } from '@/api/workouts';
@@ -12,6 +12,8 @@ export default function ProfilePage() {
   const qc = useQueryClient();
   const { updateUser } = useAuthStore();
   const [editing, setEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const { data: me, isLoading } = useQuery({
     queryKey: ['me'],
@@ -73,6 +75,20 @@ export default function ProfilePage() {
     },
   });
 
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const updated = await authApi.uploadAvatar(file);
+      updateUser(updated);
+      qc.invalidateQueries({ queryKey: ['me'] });
+    } finally {
+      setAvatarUploading(false);
+      e.target.value = '';
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -97,12 +113,29 @@ export default function ProfilePage() {
 
       {/* Avatar + name card */}
       <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 flex items-center gap-5">
-        <div className="w-20 h-20 rounded-full bg-violet-700 flex items-center justify-center text-2xl font-bold text-white flex-shrink-0">
-          {user.avatar_url ? (
-            <img src={user.avatar_url} alt={user.username} className="w-full h-full rounded-full object-cover" />
-          ) : (
-            initials
-          )}
+        <div className="relative flex-shrink-0">
+          <div className="w-20 h-20 rounded-full bg-violet-700 flex items-center justify-center text-2xl font-bold text-white">
+            {user.avatar_url ? (
+              <img src={user.avatar_url} alt={user.username} className="w-full h-full rounded-full object-cover" />
+            ) : (
+              initials
+            )}
+          </div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={avatarUploading}
+            className="absolute bottom-0 right-0 w-7 h-7 bg-violet-600 hover:bg-violet-500 rounded-full flex items-center justify-center border-2 border-slate-800 transition-colors disabled:opacity-50"
+            title="Change profile photo"
+          >
+            <Camera className="w-3.5 h-3.5 text-white" />
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={handleAvatarChange}
+          />
         </div>
         <div className="flex-1 min-w-0">
           <h2 className="text-xl font-bold text-white truncate">{user.full_name || user.username}</h2>
