@@ -50,6 +50,7 @@ async def admin_logout():
 
 
 @router.get("", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse)
 async def admin_dashboard(request: Request, db: AsyncSession = Depends(get_db)):
     redirect = _require_auth(request)
     if redirect:
