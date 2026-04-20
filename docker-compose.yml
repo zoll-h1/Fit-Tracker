@@ -1,6 +1,24 @@
 version: "3.9"
 
 services:
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --url http://nginx:80
+    depends_on:
+      - nginx
+
   db:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -34,7 +52,7 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       UPLOAD_DIR: uploads
       MAX_UPLOAD_SIZE_MB: 5
-      BACKEND_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000"]'
+      BACKEND_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000","http://localhost:80","http://localhost"]'
       ENVIRONMENT: production
     volumes:
       - ./fittracker-backend:/app
@@ -57,7 +75,7 @@ services:
       - ./fittracker-frontend:/app
       - /app/node_modules
     environment:
-      VITE_API_URL: http://localhost:8000
+      VITE_API_URL: ""
 
 volumes:
   postgres_data:
