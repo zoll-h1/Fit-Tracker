@@ -1,17 +1,42 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
 from app.config import settings
 from app.routers import auth, users
 from app.routers import exercise_library, workouts
+from app.routers import body
+from app.routers.nutrition import router as nutrition_router, foods_router
+from app.routers import gamification, analytics, notifications
+from app.routers import templates
+from app.routers.social import router as social_router, users_router
+from app.routers import challenges
+from app.routers.trainer import router as trainer_router
+from app.models import trainer as trainer_models  # noqa: F401
+from app.admin.router import router as admin_router
+from app.core.scheduler import start_scheduler, stop_scheduler
 
 app = FastAPI(
     title="FitTracker API",
     version="1.0.0",
     description="FitTracker — Your AI-powered fitness companion",
 )
+
+# Sentry (only if DSN is configured)
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[FastApiIntegration(), SqlalchemyIntegration()],
+        traces_sample_rate=0.1,
+        environment=os.getenv("ENVIRONMENT", "development"),
+    )
 
 # CORS
 app.add_middleware(
@@ -32,8 +57,47 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(exercise_library.router)
 app.include_router(workouts.router)
+app.include_router(body.router)
+app.include_router(nutrition_router)
+app.include_router(foods_router)
+app.include_router(gamification.router)
+app.include_router(analytics.router)
+app.include_router(notifications.router)
+app.include_router(templates.router)
+app.include_router(social_router)
+app.include_router(users_router)
+app.include_router(challenges.router)
+app.include_router(trainer_router)
+app.include_router(admin_router)
+
+
+@app.on_event("startup")
+async def startup_event():
+    start_scheduler()
+    from app.database import AsyncSessionLocal
+    from app.seeds.achievements import seed_achievements
+    from app.seeds.exercises import seed as seed_exercises
+    from app.seeds.foods import seed as seed_foods
+    async with AsyncSessionLocal() as db:
+        try:
+            await seed_achievements(db)
+        except Exception:
+            pass
+        try:
+            await seed_exercises()
+        except Exception:
+            pass
+        try:
+            await seed_foods()
+        except Exception:
+            pass
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    stop_scheduler()
 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok", "service": "fittracker-api"}
+    return {"status": "ok", "version": "1.0.0"}

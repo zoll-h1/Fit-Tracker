@@ -15,7 +15,7 @@ from app.models import *  # noqa: F401, F403
 config = context.config
 
 # Override sqlalchemy.url with DATABASE_URL from environment if set
-db_url = os.getenv("DATABASE_URL", "").replace("+asyncpg", "+psycopg2")
+db_url = os.getenv("DATABASE_URL", "")
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
 

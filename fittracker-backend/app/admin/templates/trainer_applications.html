@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Trainer Applications{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="text-white mb-0">🎓 Trainer Applications <span class="badge bg-secondary ms-2">{{ applications|length }}</span></h4>
+</div>
+
+{% if message %}
+<div class="alert alert-success">{{ message }}</div>
+{% endif %}
+
+{% if not applications %}
+<div class="card text-center py-5">
+  <p class="text-muted mb-0 fs-5">📭 No trainer applications yet.</p>
+</div>
+{% else %}
+<div class="d-flex flex-column gap-3">
+  {% for item in applications %}
+  {% set app = item.app %}
+  {% set user = item.user %}
+
+  <div class="card">
+    <!-- Card Header -->
+    <div class="card-header d-flex justify-content-between align-items-center" style="border-bottom: 1px solid #334155;">
+      <div class="d-flex align-items-center gap-3">
+        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
+             style="width:42px; height:42px; font-size:14px; background:#7c3aed !important;">
+          {{ (user.full_name or user.username)[:2]|upper }}
+        </div>
+        <div>
+          <div class="fw-semibold text-white">{{ user.full_name or user.username }}</div>
+          <div class="text-muted small">@{{ user.username }} &middot; {{ user.email }}</div>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        {% if app.status == 'pending' %}
+          <span class="badge" style="background:#854d0e; color:#fef08a; font-size:12px;">⏳ PENDING</span>
+        {% elif app.status == 'approved' %}
+          <span class="badge" style="background:#14532d; color:#86efac; font-size:12px;">✓ APPROVED</span>
+        {% else %}
+          <span class="badge" style="background:#450a0a; color:#fca5a5; font-size:12px;">✕ REJECTED</span>
+        {% endif %}
+        <span class="text-muted small">{{ app.created_at.strftime('%b %d, %Y') }}</span>
+      </div>
+    </div>
+
+    <!-- User Stats Row -->
+    <div class="d-flex border-bottom" style="border-color:#334155 !important;">
+      <div class="flex-fill text-center py-3 border-end" style="border-color:#334155 !important;">
+        <div class="fw-bold text-white fs-5">{{ item.total_workouts }}</div>
+        <div class="text-muted small">Workouts</div>
+      </div>
+      <div class="flex-fill text-center py-3 border-end" style="border-color:#334155 !important;">
+        <div class="fw-bold text-white fs-5">{{ item.level }}</div>
+        <div class="text-muted small">Level</div>
+      </div>
+      <div class="flex-fill text-center py-3 border-end" style="border-color:#334155 !important;">
+        <div class="fw-bold text-white fs-5">{{ item.xp }}</div>
+        <div class="text-muted small">Total XP</div>
+      </div>
+      <div class="flex-fill text-center py-3">
+        <div class="fw-bold text-white fs-5">{{ item.streak }}d</div>
+        <div class="text-muted small">Streak</div>
+      </div>
+    </div>
+
+    <!-- Application Text -->
+    <div class="card-body">
+      <div class="mb-3">
+        <div class="text-muted small text-uppercase fw-semibold mb-1" style="letter-spacing:.05em;">Why they want to be a trainer</div>
+        <p class="text-white mb-0" style="white-space:pre-wrap;">{{ app.motivation }}</p>
+      </div>
+      <div class="mb-3">
+        <div class="text-muted small text-uppercase fw-semibold mb-1" style="letter-spacing:.05em;">Credentials &amp; Experience</div>
+        <p class="text-white mb-0" style="white-space:pre-wrap;">{{ app.credentials }}</p>
+      </div>
+      {% if app.admin_note %}
+      <div class="alert alert-danger py-2 mb-0">
+        <strong>Admin note:</strong> {{ app.admin_note }}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    {% if app.status == 'pending' %}
+    <div class="card-footer d-flex gap-2 align-items-center" style="border-top:1px solid #334155;">
+      <form method="post" action="/admin/trainer-applications/{{ app.id }}/approve" class="m-0">
+        <button type="submit" class="btn btn-success btn-sm px-4">✓ Approve — Grant Trainer Role</button>
+      </form>
+      <form method="post" action="/admin/trainer-applications/{{ app.id }}/reject" class="d-flex gap-2 align-items-center m-0 flex-grow-1">
+        <input name="admin_note" placeholder="Rejection reason (optional)"
+               class="form-control form-control-sm" style="max-width:340px;">
+        <button type="submit" class="btn btn-danger btn-sm px-3">✕ Reject</button>
+      </form>
+    </div>
+    {% elif app.reviewed_at %}
+    <div class="card-footer" style="border-top:1px solid #334155;">
+      <span class="text-muted small">Reviewed on {{ app.reviewed_at.strftime('%b %d, %Y at %H:%M') }}</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {% endfor %}
+</div>
+{% endif %}
+
+{% endblock %}
+

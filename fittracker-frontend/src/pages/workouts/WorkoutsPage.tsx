@@ -24,7 +24,7 @@ export default function WorkoutsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['workouts', page],
-    queryFn: () => workoutsApi.list(page, 10, 'completed'),
+    queryFn: () => workoutsApi.list(page, 10, 'finished'),
   });
 
   const startMutation = useMutation({

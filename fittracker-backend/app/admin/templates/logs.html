@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+{% block content %}
+<h4 class="text-white mb-4">📋 Recent Activity</h4>
+<div class="card mb-4">
+  <div class="card-header text-muted">Recent Workouts (Last 20)</div>
+  <table class="table table-dark table-hover mb-0">
+    <thead><tr><th>ID</th><th>User</th><th>Name</th><th>Sets</th><th>Volume</th><th>Status</th><th>Started</th></tr></thead>
+    <tbody>
+    {% for w in recent_workouts %}
+    <tr>
+      <td>{{ w.id }}</td>
+      <td>{{ w.username }}</td>
+      <td>{{ w.name }}</td>
+      <td>{{ w.total_sets }}</td>
+      <td>{{ "%.1f"|format(w.total_volume_kg|float) }} kg</td>
+      <td><span class="badge {% if w.status == 'finished' %}bg-success{% else %}bg-warning{% endif %}">{{ w.status }}</span></td>
+      <td>{{ w.started_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

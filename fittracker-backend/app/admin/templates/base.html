@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FitTracker Admin — {% block title %}{% endblock %}</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+body { background: #0f172a; color: #e2e8f0; }
+.sidebar { background: #1e293b; min-height: 100vh; border-right: 1px solid #334155; }
+.nav-link { color: #94a3b8; }
+.nav-link:hover, .nav-link.active { color: #fff; background: #334155; border-radius: 8px; }
+.card { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; }
+.table { color: #e2e8f0; }
+.table thead { background: #334155; }
+.badge-active { background: #10b981; }
+.badge-inactive { background: #ef4444; }
+.text-muted { color: #94a3b8 !important; }
+.form-control, .form-select { background: #0f172a !important; border-color: #334155 !important; color: #e2e8f0 !important; }
+.form-control::placeholder { color: #64748b !important; }
+.alert-success { background: #14532d; border-color: #166534; color: #86efac; }
+.alert-danger { background: #450a0a; border-color: #7f1d1d; color: #fca5a5; }
+</style>
+</head>
+<body>
+<div class="d-flex">
+  <div class="sidebar p-3" style="width: 220px; min-width: 220px;">
+    <div class="text-white fw-bold fs-5 mb-4">🏋️ FitTracker</div>
+    <div class="text-muted small mb-2">ADMIN</div>
+    <nav class="nav flex-column gap-1">
+      <a href="/admin" class="nav-link {% if active=='dashboard' %}active{% endif %}">📊 Dashboard</a>
+      <a href="/admin/users" class="nav-link {% if active=='users' %}active{% endif %}">👥 Users</a>
+      <a href="/admin/exercises" class="nav-link {% if active=='exercises' %}active{% endif %}">🏋️ Exercises</a>
+      <a href="/admin/foods" class="nav-link {% if active=='foods' %}active{% endif %}">🍎 Foods</a>
+      <a href="/admin/trainer-applications" class="nav-link {% if active=='trainer_applications' %}active{% endif %}">🎓 Trainer Apps</a>
+      <a href="/admin/logs" class="nav-link {% if active=='logs' %}active{% endif %}">📋 Logs</a>
+    </nav>
+    <div class="mt-auto pt-4">
+      <a href="/admin/logout" class="nav-link text-danger">🚪 Logout</a>
+    </div>
+  </div>
+  <div class="flex-grow-1 p-4">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+</body>
+</html>

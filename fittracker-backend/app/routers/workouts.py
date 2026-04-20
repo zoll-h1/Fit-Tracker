@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -10,7 +11,7 @@ from app.database import get_db
 from app.dependencies import get_current_active_user
 from app.models.exercise import ExerciseLibrary, PersonalRecord
 from app.models.user import User
-from app.models.workout import WorkoutExercise, WorkoutSession, WorkoutSet
+from app.models.workout import WorkoutExercise, WorkoutSession, WorkoutSet, WorkoutTemplate, TemplateExercise
 from app.schemas.workout import (
     WorkoutExerciseCreate,
     WorkoutExerciseResponse,
@@ -23,6 +24,9 @@ from app.schemas.workout import (
     WorkoutSetUpdate,
     WorkoutStartRequest,
 )
+from app.schemas.templates import TemplateSaveFromWorkout, TemplateOut
+from app.services import gamification_service
+from app.services.notification_service import create_notification
 
 router = APIRouter(prefix="/api/workouts", tags=["workouts"])
 
@@ -52,6 +56,55 @@ async def _get_session_for_user(
     return session  # type: ignore[return-value]
 
 
+# ─── Superset & Cardio sub-resource endpoints (defined before /{session_id}) ──
+
+class CardioUpdateRequest(BaseModel):
+    session_type: str | None = None
+    distance_km: float | None = None
+    avg_pace_min_km: float | None = None
+    avg_heart_rate: int | None = None
+    max_heart_rate: int | None = None
+
+
+class SupersetGroupRequest(BaseModel):
+    superset_group: int | None = None
+
+
+@router.patch("/exercises/{exercise_id}/superset", response_model=WorkoutExerciseResponse)
+async def set_superset_group(
+    exercise_id: int,
+    body: SupersetGroupRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Set or clear the superset group for a workout exercise."""
+    result = await db.execute(
+        select(WorkoutExercise).where(WorkoutExercise.id == exercise_id)
+    )
+    we = result.scalar_one_or_none()
+    if not we:
+        _not_found("Workout exercise not found")
+
+    # Verify ownership via session
+    session_result = await db.execute(
+        select(WorkoutSession).where(
+            WorkoutSession.id == we.session_id,  # type: ignore[union-attr]
+            WorkoutSession.user_id == current_user.id,
+        )
+    )
+    if not session_result.scalar_one_or_none():
+        _not_found("Workout exercise not found")
+
+    we.superset_group = body.superset_group  # type: ignore[union-attr]
+    await db.commit()
+
+    result2 = await db.execute(
+        select(WorkoutExercise)
+        .where(WorkoutExercise.id == exercise_id)
+        .options(selectinload(WorkoutExercise.sets))
+    )
+    return WorkoutExerciseResponse.model_validate(result2.scalar_one())
+
 # ─── Sessions ─────────────────────────────────────────────────────────────────
 
 @router.post("", response_model=WorkoutSessionResponse, status_code=201)
@@ -67,6 +120,7 @@ async def start_workout(
         notes=body.notes,
         template_id=body.template_id,
         status="in_progress",
+        session_type=body.session_type,
     )
     db.add(session)
     await db.commit()
@@ -120,6 +174,52 @@ async def get_workout(
     return WorkoutSessionResponse.model_validate(session)
 
 
+class WorkoutUpdateRequest(BaseModel):
+    name: str | None = None
+    notes: str | None = None
+
+
+@router.patch("/{session_id}", response_model=WorkoutSessionResponse)
+async def update_workout(
+    session_id: int,
+    body: WorkoutUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    session = await _get_session_for_user(session_id, current_user.id, db)
+    if body.name is not None:
+        session.name = body.name
+    if body.notes is not None:
+        session.notes = body.notes
+    await db.commit()
+    session_refreshed = await _get_session_for_user(session_id, current_user.id, db, load_relations=True)
+    return WorkoutSessionResponse.model_validate(session_refreshed)
+
+
+@router.patch("/{session_id}/cardio", response_model=WorkoutSessionResponse)
+async def update_cardio_data(
+    session_id: int,
+    body: CardioUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Update cardio-specific fields on a workout session."""
+    session = await _get_session_for_user(session_id, current_user.id, db)
+    if body.session_type is not None:
+        session.session_type = body.session_type
+    if body.distance_km is not None:
+        session.distance_km = body.distance_km
+    if body.avg_pace_min_km is not None:
+        session.avg_pace_min_km = body.avg_pace_min_km
+    if body.avg_heart_rate is not None:
+        session.avg_heart_rate = body.avg_heart_rate
+    if body.max_heart_rate is not None:
+        session.max_heart_rate = body.max_heart_rate
+    await db.commit()
+    session_refreshed = await _get_session_for_user(session_id, current_user.id, db, load_relations=True)
+    return WorkoutSessionResponse.model_validate(session_refreshed)
+
+
 @router.post("/{session_id}/finish", response_model=WorkoutSessionResponse)
 async def finish_workout(
     session_id: int,
@@ -145,7 +245,7 @@ async def finish_workout(
 
     now = datetime.now(timezone.utc)
     session.finished_at = now  # type: ignore[union-attr]
-    session.status = "completed"  # type: ignore[union-attr]
+    session.status = "finished"  # type: ignore[union-attr]
 
     started = session.started_at  # type: ignore[union-attr]
     if started.tzinfo is None:
@@ -209,6 +309,56 @@ async def finish_workout(
                     db.add(new_pr)
                 ws.is_pr = True
 
+    await db.flush()
+
+    # Gamification / side-effects — wrapped so a failure never blocks the save
+    try:
+        await gamification_service.award_xp(db, current_user.id, gamification_service.XP_AWARDS["complete_workout"], "complete_workout")
+        await gamification_service.update_streak(db, current_user.id)
+
+        pr_count_this_session = sum(
+            1 for we in session.exercises  # type: ignore[union-attr]
+            for ws in we.sets if ws.is_pr
+        )
+        if pr_count_this_session:
+            await gamification_service.award_xp(
+                db, current_user.id,
+                gamification_service.XP_AWARDS["pr_achieved"] * pr_count_this_session,
+                "pr_achieved"
+            )
+
+        new_achievements = await gamification_service.check_achievements(db, current_user.id, "workout_finish")
+        for ach in new_achievements:
+            await create_notification(
+                db, current_user.id, "achievement_earned",
+                "🏆 Achievement Unlocked!",
+                f"{ach['name']} — {ach['description']} (+{ach['xp_reward']} XP)",
+                action_url="/achievements",
+            )
+    except Exception:
+        pass  # gamification errors must not block the workout save
+
+    try:
+        from app.services.challenge_service import update_challenge_progress
+        await update_challenge_progress(db, current_user.id)
+    except Exception:
+        pass
+
+    try:
+        from app.models.social import ActivityFeed as ActivityFeedModel
+        feed_entry = ActivityFeedModel(
+            user_id=current_user.id,
+            activity_type="workout",
+            ref_id=session.id,
+            title=f"Completed workout: {session.name}",
+            body=f"{session.total_sets} sets · {int(float(session.total_volume_kg or 0))} kg volume"
+                 + (f" · {session.duration_seconds // 60} min" if session.duration_seconds else ""),
+        )
+        db.add(feed_entry)
+        await db.flush()
+    except Exception:
+        pass
+
     await db.commit()
 
     result = await db.execute(
@@ -220,13 +370,13 @@ async def finish_workout(
 
 
 @router.delete("/{session_id}", status_code=204)
-async def cancel_workout(
+async def delete_workout(
     session_id: int,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
     session = await _get_session_for_user(session_id, current_user.id, db)
-    session.status = "cancelled"
+    await db.delete(session)
     await db.commit()
 
 
@@ -394,3 +544,60 @@ async def delete_set(
         _not_found("Set not found")
     await db.delete(ws)
     await db.commit()
+
+
+# ─── Save workout as template ────────────────────────────────────────────────
+
+@router.post("/{workout_id}/save-as-template", response_model=TemplateOut, status_code=201)
+async def save_as_template(
+    workout_id: int,
+    body: TemplateSaveFromWorkout,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Save an existing workout session as a reusable template."""
+    from app.core.exceptions import ForbiddenError
+
+    session = await _get_session_for_user(
+        workout_id, current_user.id, db, load_relations=True
+    )
+
+    template = WorkoutTemplate(
+        user_id=current_user.id,
+        name=body.name,
+        description=body.description,
+        is_public=body.is_public,
+        estimated_duration_min=body.estimated_duration_min,
+    )
+    db.add(template)
+    await db.flush()
+
+    for order, we in enumerate(session.exercises, start=1):
+        te = TemplateExercise(
+            template_id=template.id,
+            exercise_library_id=we.exercise_library_id,
+            exercise_order=we.exercise_order or order,
+            rest_seconds=we.rest_seconds,
+            notes=we.notes,
+        )
+        db.add(te)
+
+    await db.commit()
+
+    result = await db.execute(
+        select(WorkoutTemplate)
+        .where(WorkoutTemplate.id == template.id)
+        .options(selectinload(WorkoutTemplate.exercises))
+    )
+    t = result.scalar_one()
+    return TemplateOut(
+        id=t.id,
+        user_id=t.user_id,
+        name=t.name,
+        description=t.description,
+        is_public=t.is_public,
+        estimated_duration_min=t.estimated_duration_min,
+        times_used=t.times_used,
+        created_at=t.created_at,
+        exercise_count=len(t.exercises),
+    )

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Timer, Plus, CheckCircle, X, Dumbbell } from 'lucide-react';
+import { Timer, Plus, CheckCircle, X, Dumbbell, Heart } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { workoutsApi, type WorkoutSession, type WorkoutExercise, type WorkoutSet } from '@/api/workouts';
 import { useWorkoutStore } from '@/stores/workoutStore';
@@ -34,6 +34,10 @@ export default function ActiveWorkoutPage() {
 
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [showFinish, setShowFinish] = useState(false);
+  const [sessionType, setSessionType] = useState<'strength' | 'cardio'>('strength');
+  const [distanceKm, setDistanceKm] = useState('');
+  const [avgPace, setAvgPace] = useState('');
+  const [heartRate, setHeartRate] = useState('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -49,6 +53,22 @@ export default function ActiveWorkoutPage() {
 
   if (!activeSession) return null;
 
+  const handleFinish = async () => {
+    if (sessionType === 'cardio') {
+      try {
+        await workoutsApi.updateCardio(activeSession.id, {
+          session_type: 'cardio',
+          distance_km: distanceKm ? parseFloat(distanceKm) : undefined,
+          avg_pace_min_km: avgPace ? parseFloat(avgPace) : undefined,
+          avg_heart_rate: heartRate ? parseInt(heartRate) : undefined,
+        });
+      } catch {
+        // non-blocking
+      }
+    }
+    setShowFinish(true);
+  };
+
   return (
     <div className="p-4 pb-24 space-y-4 max-w-2xl mx-auto">
       {/* Header */}
@@ -61,12 +81,73 @@ export default function ActiveWorkoutPage() {
           </div>
         </div>
         <button
-          onClick={() => setShowFinish(true)}
+          onClick={handleFinish}
           className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium text-sm transition-colors"
         >
           Finish
         </button>
       </div>
+
+      {/* Session type toggle */}
+      <div className="flex gap-2">
+        {(['strength', 'cardio'] as const).map((type) => (
+          <button
+            key={type}
+            onClick={() => setSessionType(type)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${
+              sessionType === type
+                ? 'bg-violet-600 text-white'
+                : 'bg-slate-800 border border-slate-700 text-slate-400 hover:text-white'
+            }`}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+
+      {/* Cardio fields */}
+      {sessionType === 'cardio' && (
+        <div className="bg-slate-800 border border-violet-500/30 rounded-xl p-4 space-y-3">
+          <div className="flex items-center gap-2 text-violet-400 text-sm font-medium mb-1">
+            <Heart className="w-4 h-4" />
+            Cardio Data
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Distance (km)</label>
+              <input
+                type="number"
+                value={distanceKm}
+                onChange={(e) => setDistanceKm(e.target.value)}
+                placeholder="0.0"
+                step="0.1"
+                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Avg Pace (min/km)</label>
+              <input
+                type="number"
+                value={avgPace}
+                onChange={(e) => setAvgPace(e.target.value)}
+                placeholder="0.0"
+                step="0.1"
+                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-slate-400 block mb-1">Heart Rate (BPM)</label>
+              <input
+                type="number"
+                value={heartRate}
+                onChange={(e) => setHeartRate(e.target.value)}
+                placeholder="0"
+                className="w-full bg-slate-700 border border-slate-600 rounded px-2 py-1.5 text-white text-sm focus:outline-none focus:border-violet-500"
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Exercises */}
       {activeSession.exercises.length === 0 ? (
