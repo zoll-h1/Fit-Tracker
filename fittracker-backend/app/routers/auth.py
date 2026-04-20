@@ -221,14 +221,32 @@ async def upload_avatar(
     if len(data) > max_bytes:
         raise HTTPException(status_code=413, detail=f"File too large (max {settings.MAX_UPLOAD_SIZE_MB}MB)")
 
-    ext = Path(file.filename or "avatar.jpg").suffix.lower() or ".jpg"
-    filename = f"{current_user.id}_{uuid.uuid4().hex}{ext}"
-    avatars_dir = Path(settings.UPLOAD_DIR) / "avatars"
-    avatars_dir.mkdir(parents=True, exist_ok=True)
-    dest = avatars_dir / filename
-    dest.write_bytes(data)
+    if settings.use_cloudinary:
+        import cloudinary
+        import cloudinary.uploader
+        import io
+        cloudinary.config(
+            cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+            api_key=settings.CLOUDINARY_API_KEY,
+            api_secret=settings.CLOUDINARY_API_SECRET,
+        )
+        result = cloudinary.uploader.upload(
+            io.BytesIO(data),
+            public_id=f"fittracker/avatars/{current_user.id}",
+            overwrite=True,
+            resource_type="image",
+            transformation=[{"width": 256, "height": 256, "crop": "fill"}],
+        )
+        current_user.avatar_url = result["secure_url"]
+    else:
+        ext = Path(file.filename or "avatar.jpg").suffix.lower() or ".jpg"
+        filename = f"{current_user.id}_{uuid.uuid4().hex}{ext}"
+        avatars_dir = Path(settings.UPLOAD_DIR) / "avatars"
+        avatars_dir.mkdir(parents=True, exist_ok=True)
+        dest = avatars_dir / filename
+        dest.write_bytes(data)
+        current_user.avatar_url = f"/uploads/avatars/{filename}"
 
-    current_user.avatar_url = f"/uploads/avatars/{filename}"
     await db.commit()
     await db.refresh(current_user)
     return UserResponse.model_validate(current_user)

@@ -38,11 +38,13 @@ if SENTRY_DSN:
         environment=os.getenv("ENVIRONMENT", "development"),
     )
 
-# CORS
+# CORS — if origins list contains "*", allow all origins (useful for Vercel preview URLs)
+_cors_origins = settings.cors_origins
+_allow_all = "*" in _cors_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=["*"] if _allow_all else _cors_origins,
+    allow_credentials=False if _allow_all else True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
