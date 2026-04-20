@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
-import { format, addDays, subDays } from 'date-fns';
+import { format, addDays, subDays, parseISO } from 'date-fns';
 import { nutritionApi, type MealTypeGroup } from '@/api/nutrition';
 import MacroRing from '@/components/nutrition/MacroRing';
 import FoodSearchModal from '@/components/nutrition/FoodSearchModal';
@@ -50,7 +50,7 @@ export default function NutritionPage() {
   const goalFat = goals?.fat_g ?? 65;
 
   const weeklyChartData = (weekly?.days ?? []).map((d) => ({
-    day: format(new Date(d.date), 'EEE'),
+    day: format(parseISO(d.date), 'EEE'),
     calories: d.calories,
     target: d.target,
     pct: d.adherence_pct,
@@ -207,7 +207,7 @@ function MealSection({
           {group.items.map((item) => (
             <div key={item.id} className="flex items-center px-5 py-3 gap-3">
               <div className="flex-1">
-                <p className="text-white text-sm">{item.food_id}</p>
+                <p className="text-white text-sm">{item.food_name ?? `Food #${item.food_id}`}</p>
                 <p className="text-slate-500 text-xs">{item.quantity_g}g</p>
               </div>
               <div className="text-right">

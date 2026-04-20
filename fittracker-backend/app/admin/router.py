@@ -161,6 +161,68 @@ async def add_exercise(
     return RedirectResponse(url="/admin/exercises?message=Exercise+added", status_code=302)
 
 
+@router.get("/foods", response_class=HTMLResponse)
+async def admin_foods(request: Request, search: str = "", db: AsyncSession = Depends(get_db)):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    q = select(Food).order_by(Food.id.desc())
+    if search:
+        q = q.where(Food.name.ilike(f"%{search}%"))
+    result = await db.execute(q.limit(100))
+    foods = result.scalars().all()
+    return templates.TemplateResponse(request, "foods.html", {
+        "foods": foods, "total": len(foods),
+        "search": search, "message": request.query_params.get("message"), "active": "foods"
+    })
+
+
+@router.post("/foods")
+async def add_food(
+    request: Request,
+    name: str = Form(...),
+    brand: str = Form(""),
+    calories_per_100g: float = Form(...),
+    protein_g: float = Form(0),
+    carbs_g: float = Form(0),
+    fat_g: float = Form(0),
+    fiber_g: float = Form(0),
+    sugar_g: float = Form(0),
+    sodium_mg: float = Form(0),
+    db: AsyncSession = Depends(get_db),
+):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    food = Food(
+        name=name,
+        brand=brand or None,
+        calories_per_100g=calories_per_100g,
+        protein_g=protein_g,
+        carbs_g=carbs_g,
+        fat_g=fat_g,
+        fiber_g=fiber_g,
+        sugar_g=sugar_g,
+        sodium_mg=sodium_mg,
+        is_custom=False,
+    )
+    db.add(food)
+    await db.commit()
+    return RedirectResponse(url="/admin/foods?message=Food+added+successfully", status_code=302)
+
+
+@router.post("/foods/{food_id}/delete")
+async def delete_food(food_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    food = await db.get(Food, food_id)
+    if food:
+        await db.delete(food)
+        await db.commit()
+    return RedirectResponse(url="/admin/foods?message=Food+deleted", status_code=302)
+
+
 @router.get("/logs", response_class=HTMLResponse)
 async def admin_logs(request: Request, db: AsyncSession = Depends(get_db)):
     redirect = _require_auth(request)

@@ -13,7 +13,7 @@ from app.core.security import (
     verify_password,
 )
 from app.database import get_db
-from app.dependencies import get_current_user
+from app.dependencies import get_current_user, get_current_active_user
 from app.models.user import RefreshToken, User
 from app.schemas.auth import (
     TokenRefreshRequest,
@@ -21,6 +21,7 @@ from app.schemas.auth import (
     UserLoginRequest,
     UserRegisterRequest,
     UserResponse,
+    UserUpdateRequest,
 )
 from app.config import settings
 
@@ -184,4 +185,18 @@ async def logout(
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: User = Depends(get_current_user)):
+    return UserResponse.model_validate(current_user)
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_me(
+    body: UserUpdateRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    data = body.model_dump(exclude_unset=True)
+    for field, value in data.items():
+        setattr(current_user, field, value)
+    await db.commit()
+    await db.refresh(current_user)
     return UserResponse.model_validate(current_user)

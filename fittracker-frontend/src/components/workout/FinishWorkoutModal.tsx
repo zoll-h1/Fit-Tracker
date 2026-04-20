@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trophy, X, BarChart3, Clock, Flame } from 'lucide-react';
 import { workoutsApi, type WorkoutSession } from '@/api/workouts';
 
@@ -19,10 +19,17 @@ function formatTime(seconds: number): string {
 
 export default function FinishWorkoutModal({ session, elapsed, onClose, onFinished }: FinishWorkoutModalProps) {
   const [notes, setNotes] = useState(session.notes || '');
+  const qc = useQueryClient();
 
   const finishMutation = useMutation({
     mutationFn: () => workoutsApi.finish(session.id, notes || undefined),
-    onSuccess: onFinished,
+    onSuccess: () => {
+      // Invalidate all workout and dashboard queries so they refetch immediately
+      qc.invalidateQueries({ queryKey: ['workouts'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-workouts'] });
+      qc.invalidateQueries({ queryKey: ['gamification-profile'] });
+      onFinished();
+    },
   });
 
   const completedSets = session.exercises.flatMap((we) => we.sets.filter((s) => s.completed));

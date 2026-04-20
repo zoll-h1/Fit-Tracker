@@ -48,8 +48,16 @@ export default function FoodSearchModal({ mealType, logDate, onClose, onLogged }
     : null;
 
   const logMutation = useMutation({
-    mutationFn: () =>
-      nutritionApi.logMeal(selected!.id, mealType, servingG, logDate),
+    mutationFn: () => {
+      // Send full ISO datetime (today at current time, or noon of the target date)
+      // to avoid UTC-midnight timezone boundary issues
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const loggedAt = logDate === todayStr
+        ? now.toISOString()
+        : `${logDate}T12:00:00.000Z`;
+      return nutritionApi.logMeal(selected!.id, mealType, servingG, loggedAt);
+    },
     onSuccess: onLogged,
   });
 

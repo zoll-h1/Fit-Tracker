@@ -17,6 +17,7 @@ export interface Food {
 export interface MealLog {
   id: number;
   food_id: number;
+  food_name?: string;
   meal_type: string;
   quantity_g: number;
   logged_at: string;

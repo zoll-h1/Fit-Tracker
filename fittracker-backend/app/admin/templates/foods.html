@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Foods{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h4 class="text-white mb-0">🍎 Food Library ({{ total }})</h4>
+</div>
+{% if message %}<div class="alert alert-success">{{ message }}</div>{% endif %}
+
+<!-- Add food form -->
+<form method="POST" action="/admin/foods" class="card p-4 mb-4">
+  <h6 class="text-slate-300 mb-3">Add New Food</h6>
+  <div class="row g-2 mb-2">
+    <div class="col-md-4">
+      <label class="form-label text-slate-400" style="font-size:12px;">Name *</label>
+      <input type="text" name="name" placeholder="e.g. Chicken Breast" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-slate-400" style="font-size:12px;">Brand</label>
+      <input type="text" name="brand" placeholder="e.g. Generic" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-slate-400" style="font-size:12px;">Calories/100g *</label>
+      <input type="number" step="0.01" name="calories_per_100g" placeholder="165" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label text-slate-400" style="font-size:12px;">&nbsp;</label>
+      <button type="button" class="btn w-100 mt-0" style="background:#334155; color:#94a3b8; font-size:13px;" onclick="toggleExtra()">
+        + Macros / Micronutrients
+      </button>
+    </div>
+  </div>
+
+  <!-- Extra macro/micro fields (collapsed by default) -->
+  <div id="extraFields" style="display:none;" class="row g-2 mb-3">
+    <div class="col-md-2">
+      <label class="form-label text-slate-400" style="font-size:12px;">Protein (g)</label>
+      <input type="number" step="0.01" name="protein_g" value="0" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-slate-400" style="font-size:12px;">Carbs (g)</label>
+      <input type="number" step="0.01" name="carbs_g" value="0" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-slate-400" style="font-size:12px;">Fat (g)</label>
+      <input type="number" step="0.01" name="fat_g" value="0" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-slate-400" style="font-size:12px;">Fiber (g)</label>
+      <input type="number" step="0.01" name="fiber_g" value="0" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-slate-400" style="font-size:12px;">Sugar (g)</label>
+      <input type="number" step="0.01" name="sugar_g" value="0" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-slate-400" style="font-size:12px;">Sodium (mg)</label>
+      <input type="number" step="0.1" name="sodium_mg" value="0" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0;">
+    </div>
+  </div>
+
+  <button type="submit" class="btn px-4" style="background:#7c3aed; color:white;">Add Food</button>
+</form>
+
+<!-- Search -->
+<form method="GET" action="/admin/foods" class="mb-3 d-flex gap-2">
+  <input name="search" value="{{ search }}" placeholder="Search foods…" class="form-control" style="background:#0f172a; border-color:#334155; color:#e2e8f0; max-width:300px;">
+  <button type="submit" class="btn" style="background:#334155; color:#e2e8f0;">Search</button>
+  {% if search %}<a href="/admin/foods" class="btn" style="background:#1e293b; color:#94a3b8; border:1px solid #334155;">Clear</a>{% endif %}
+</form>
+
+<!-- Foods table -->
+<div class="card">
+  <table class="table table-dark table-hover mb-0" style="font-size:13px;">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Brand</th>
+        <th>Calories</th>
+        <th>Protein</th>
+        <th>Carbs</th>
+        <th>Fat</th>
+        <th>Fiber</th>
+        <th>Sugar</th>
+        <th>Sodium</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for food in foods %}
+    <tr>
+      <td class="text-slate-500">{{ food.id }}</td>
+      <td class="text-white">{{ food.name }}</td>
+      <td class="text-slate-400">{{ food.brand or '—' }}</td>
+      <td>{{ food.calories_per_100g }} kcal</td>
+      <td>{{ food.protein_g }}g</td>
+      <td>{{ food.carbs_g }}g</td>
+      <td>{{ food.fat_g }}g</td>
+      <td>{{ food.fiber_g }}g</td>
+      <td>{{ food.sugar_g }}g</td>
+      <td>{{ food.sodium_mg }}mg</td>
+      <td>
+        <form method="POST" action="/admin/foods/{{ food.id }}/delete" onsubmit="return confirm('Delete {{ food.name }}?')">
+          <button type="submit" class="btn btn-sm" style="background:#7f1d1d; color:#fca5a5; font-size:11px;">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+    {% if not foods %}
+    <tr><td colspan="11" class="text-center text-slate-500 py-4">No foods found</td></tr>
+    {% endif %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function toggleExtra() {
+  const el = document.getElementById('extraFields');
+  el.style.display = el.style.display === 'none' ? 'flex' : 'none';
+  el.style.flexWrap = 'wrap';
+}
+</script>
+{% endblock %}

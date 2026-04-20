@@ -21,14 +21,17 @@ import ChallengesPage from '@/pages/challenges/ChallengesPage'
 import ChallengeDetailPage from '@/pages/challenges/ChallengeDetailPage'
 import NotificationsPage from '@/pages/notifications/NotificationsPage'
 import SettingsPage from '@/pages/settings/SettingsPage'
+import ProfilePage from '@/pages/profile/ProfilePage'
 import TrainerPage from '@/pages/trainer/TrainerPage'
+
 import ProgramDetailPage from '@/pages/trainer/ProgramDetailPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 1000 * 60 * 5,
+      staleTime: 1000 * 30, // 30 seconds — short enough to feel live
+      refetchOnWindowFocus: true,
     },
   },
 })
@@ -70,7 +73,7 @@ export default function App() {
               <Route path="/challenges" element={<ChallengesPage />} />
               <Route path="/challenges/:id" element={<ChallengeDetailPage />} />
               <Route path="/notifications" element={<NotificationsPage />} />
-              <Route path="/profile" element={<ComingSoon name="Profile" />} />
+              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/trainer" element={<TrainerPage />} />
               <Route path="/trainer/programs/:id" element={<ProgramDetailPage />} />

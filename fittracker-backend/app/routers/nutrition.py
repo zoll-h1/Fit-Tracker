@@ -148,36 +148,36 @@ async def daily_summary(
     day_end = day_start + timedelta(days=1)
 
     result = await db.execute(
-        select(MealLog).where(
+        select(MealLog, Food.name.label("food_name")).join(Food, Food.id == MealLog.food_id).where(
             MealLog.user_id == current_user.id,
             MealLog.logged_at >= day_start,
             MealLog.logged_at < day_end,
         ).order_by(MealLog.logged_at)
     )
-    logs = result.scalars().all()
+    rows = result.all()
 
     # Group by meal type
-    groups: dict[str, list[MealLog]] = {}
-    for log in logs:
-        groups.setdefault(log.meal_type, []).append(log)
+    groups: dict[str, list] = {}
+    for log, food_name in rows:
+        groups.setdefault(log.meal_type, []).append((log, food_name))
 
     meal_groups = []
     total_cal = total_prot = total_carbs = total_fat = total_fiber = 0.0
 
     for meal_type, items in groups.items():
-        sub_cal = sum(float(i.calories) for i in items)
-        sub_prot = sum(float(i.protein_g) for i in items)
-        sub_carbs = sum(float(i.carbs_g) for i in items)
-        sub_fat = sum(float(i.fat_g) for i in items)
+        sub_cal = sum(float(i.calories) for i, _ in items)
+        sub_prot = sum(float(i.protein_g) for i, _ in items)
+        sub_carbs = sum(float(i.carbs_g) for i, _ in items)
+        sub_fat = sum(float(i.fat_g) for i, _ in items)
         total_cal += sub_cal
         total_prot += sub_prot
         total_carbs += sub_carbs
         total_fat += sub_fat
-        total_fiber += sum(float(i.fiber_g) for i in items)
+        total_fiber += sum(float(i.fiber_g) for i, _ in items)
         meal_groups.append(
             MealTypeGroup(
                 meal_type=meal_type,
-                items=[MealLogResponse.model_validate(i) for i in items],
+                items=[MealLogResponse(**{**MealLogResponse.model_validate(i).model_dump(), "food_name": fn}) for i, fn in items],
                 subtotal_calories=round(sub_cal, 1),
                 subtotal_protein_g=round(sub_prot, 1),
                 subtotal_carbs_g=round(sub_carbs, 1),

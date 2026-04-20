@@ -43,6 +43,7 @@ class MealLogResponse(BaseModel):
 
     id: int
     food_id: int
+    food_name: Optional[str] = None
     meal_type: str
     quantity_g: float
     logged_at: datetime

@@ -25,6 +25,11 @@ export const authApi = {
     const res = await apiClient.get('/api/auth/me')
     return res.data
   },
+
+  updateMe: async (data: Partial<User>): Promise<User> => {
+    const res = await apiClient.patch('/api/auth/me', data)
+    return res.data
+  },
 }
 
 export const usersApi = {
