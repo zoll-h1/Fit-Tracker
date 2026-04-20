@@ -1,14 +1,115 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Users, Plus, Star, BookOpen, Lock } from 'lucide-react'
-import { trainerApi, type WorkoutProgram, type ClientStats } from '@/api/trainer'
+import { Users, Plus, Star, BookOpen, Lock, Clock, CheckCircle, XCircle } from 'lucide-react'
+import { trainerApi, type WorkoutProgram, type ClientStats, type TrainerApplication } from '@/api/trainer'
 import { useAuthStore } from '@/stores/authStore'
 
 const DIFFICULTY_COLORS: Record<string, string> = {
   beginner: 'bg-green-900/50 text-green-400',
   intermediate: 'bg-yellow-900/50 text-yellow-400',
   advanced: 'bg-red-900/50 text-red-400',
+}
+
+// ── Trainer Application Modal ─────────────────────────────────────────────────
+
+function TrainerApplicationModal({ onClose }: { onClose: () => void }) {
+  const [motivation, setMotivation] = useState('')
+  const [credentials, setCredentials] = useState('')
+  const [error, setError] = useState('')
+  const qc = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: () => trainerApi.applyToBeTrainer({ motivation: motivation.trim(), credentials: credentials.trim() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-trainer-application'] })
+      onClose()
+    },
+    onError: (e: any) => setError(e?.response?.data?.detail ?? 'Failed to submit application'),
+  })
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="bg-slate-800 border border-slate-700 rounded-2xl w-full max-w-lg p-6 space-y-4">
+        <div>
+          <h2 className="text-xl font-bold text-white">Apply to Become a Trainer</h2>
+          <p className="text-slate-400 text-sm mt-1">Your application will be reviewed by an admin. You'll receive trainer access once approved.</p>
+        </div>
+        {error && <p className="text-red-400 text-sm bg-red-900/20 border border-red-800 rounded-lg px-3 py-2">{error}</p>}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              Why do you want to be a trainer? *
+            </label>
+            <textarea
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-400 text-sm resize-none focus:outline-none focus:border-blue-500"
+              rows={4}
+              placeholder="Tell us your motivation, goals, and how you plan to help clients..."
+              value={motivation}
+              onChange={e => setMotivation(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+              What credentials & experience do you have? *
+            </label>
+            <textarea
+              className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2.5 text-white placeholder-slate-400 text-sm resize-none focus:outline-none focus:border-blue-500"
+              rows={4}
+              placeholder="E.g. certifications, years of training, personal achievements, specialties..."
+              value={credentials}
+              onChange={e => setCredentials(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex gap-3 pt-1">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-lg border border-slate-600 text-slate-300 text-sm hover:bg-slate-700 transition-colors">
+            Cancel
+          </button>
+          <button
+            onClick={() => mutation.mutate()}
+            disabled={!motivation.trim() || !credentials.trim() || mutation.isPending}
+            className="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium transition-colors"
+          >
+            {mutation.isPending ? 'Submitting…' : 'Submit Application'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Application Status Banner ─────────────────────────────────────────────────
+
+function ApplicationStatusBanner({ app, onReapply }: { app: TrainerApplication; onReapply: () => void }) {
+  if (app.status === 'pending') {
+    return (
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-yellow-900/20 border border-yellow-700 text-yellow-300">
+        <Clock className="w-5 h-5 flex-shrink-0" />
+        <div>
+          <p className="font-medium text-sm">Application pending review</p>
+          <p className="text-xs opacity-75 mt-0.5">Submitted {new Date(app.created_at).toLocaleDateString()}. An admin will review your application soon.</p>
+        </div>
+      </div>
+    )
+  }
+  if (app.status === 'rejected') {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-red-900/20 border border-red-800 text-red-300">
+          <XCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-medium text-sm">Application rejected</p>
+            {app.admin_note && <p className="text-xs opacity-75 mt-0.5">Reason: {app.admin_note}</p>}
+          </div>
+          <button onClick={onReapply} className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">
+            Reapply
+          </button>
+        </div>
+      </div>
+    )
+  }
+  return null
 }
 
 // ── Create Program Modal ──────────────────────────────────────────────────────
@@ -334,17 +435,17 @@ type Tab = 'programs' | 'clients' | 'discover'
 
 export default function TrainerPage() {
   const [tab, setTab] = useState<Tab>('programs')
-  const { user, updateUser } = useAuthStore()
-  const qc = useQueryClient()
+  const { user } = useAuthStore()
+  const [showApplyModal, setShowApplyModal] = useState(false)
   const isTrainer = user?.role === 'trainer' || user?.role === 'admin'
 
-  const becomeMutation = useMutation({
-    mutationFn: trainerApi.becomeTrainer,
-    onSuccess: (data) => {
-      updateUser({ role: data.role })
-      qc.invalidateQueries({ queryKey: ['trainer-programs'] })
-    },
+  const { data: myApplication } = useQuery<TrainerApplication | null>({
+    queryKey: ['my-trainer-application'],
+    queryFn: trainerApi.getMyApplication,
+    enabled: !isTrainer,
   })
+
+  const hasApplied = !!myApplication
 
   return (
     <div className="space-y-6">
@@ -358,22 +459,26 @@ export default function TrainerPage() {
             <p className="text-slate-400 text-sm mt-0.5">Manage programs, clients, and discover new content.</p>
           )}
         </div>
-        {!isTrainer && (
+        {!isTrainer && !hasApplied && (
           <button
-            onClick={() => becomeMutation.mutate()}
-            disabled={becomeMutation.isPending}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-medium transition-colors"
+            onClick={() => setShowApplyModal(true)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium transition-colors"
           >
             <Star className="w-4 h-4" />
-            {becomeMutation.isPending ? 'Upgrading…' : 'Become a Trainer'}
+            Become a Trainer
           </button>
         )}
         {isTrainer && (
-          <span className="px-3 py-1 rounded-full bg-blue-900/50 text-blue-400 text-sm font-medium border border-blue-800">
-            ✓ Trainer
+          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-900/50 text-blue-400 text-sm font-medium border border-blue-800">
+            <CheckCircle className="w-4 h-4" /> Trainer
           </span>
         )}
       </div>
+
+      {/* Application status */}
+      {!isTrainer && myApplication && (
+        <ApplicationStatusBanner app={myApplication} onReapply={() => setShowApplyModal(true)} />
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-slate-700">
@@ -394,6 +499,8 @@ export default function TrainerPage() {
       {tab === 'programs' && <ProgramsTab isTrainer={isTrainer} />}
       {tab === 'clients' && <ClientsTab isTrainer={isTrainer} />}
       {tab === 'discover' && <DiscoverTab />}
+
+      {showApplyModal && <TrainerApplicationModal onClose={() => setShowApplyModal(false)} />}
     </div>
   )
 }

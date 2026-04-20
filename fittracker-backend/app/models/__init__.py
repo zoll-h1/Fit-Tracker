@@ -13,6 +13,9 @@ from app.models.gamification import UserXP, AchievementDefinition, UserAchieveme
 from app.models.notification import Notification, NotificationSettings
 from app.models.social import UserFollow, ActivityFeed, FeedLike, FeedComment
 from app.models.challenges import Challenge, ChallengeParticipant
+from app.models.trainer import (
+    TrainerApplication, WorkoutProgram, ProgramDay, ProgramExercise, ProgramAssignment
+)
 
 __all__ = [
     "User", "RefreshToken", "UserToken",
@@ -25,4 +28,5 @@ __all__ = [
     "Notification", "NotificationSettings",
     "UserFollow", "ActivityFeed", "FeedLike", "FeedComment",
     "Challenge", "ChallengeParticipant",
+    "TrainerApplication", "WorkoutProgram", "ProgramDay", "ProgramExercise", "ProgramAssignment",
 ]

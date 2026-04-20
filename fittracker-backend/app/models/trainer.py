@@ -7,6 +7,19 @@ from app.models.user import User  # noqa: F401
 from app.models.exercise import ExerciseLibrary  # noqa: F401
 
 
+class TrainerApplication(Base):
+    __tablename__ = "trainer_applications"
+    id: Mapped[int] = mapped_column(sa.Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    motivation: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    credentials: Mapped[str] = mapped_column(sa.Text, nullable=False)
+    status: Mapped[str] = mapped_column(sa.String(20), default="pending")  # pending/approved/rejected
+    admin_note: Mapped[Optional[str]] = mapped_column(sa.Text)
+    created_at: Mapped[datetime] = mapped_column(sa.TIMESTAMP(timezone=True), server_default=sa.func.now())
+    reviewed_at: Mapped[Optional[datetime]] = mapped_column(sa.TIMESTAMP(timezone=True))
+    user: Mapped["User"] = relationship("User", foreign_keys=[user_id])
+
+
 class WorkoutProgram(Base):
     __tablename__ = "workout_programs"
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True, index=True)

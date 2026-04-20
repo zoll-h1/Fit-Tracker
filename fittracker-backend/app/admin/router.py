@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
@@ -12,6 +13,8 @@ from app.models.workout import WorkoutSession
 from app.models.exercise import ExerciseLibrary
 from app.models.nutrition import Food
 from app.models.challenges import Challenge
+from app.models.trainer import TrainerApplication
+from app.models.gamification import UserXP
 from app.admin.auth import get_admin_session, ADMIN_SESSION_TOKEN, ADMIN_COOKIE_NAME, ADMIN_PASSWORD
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -251,3 +254,76 @@ async def admin_logs(request: Request, db: AsyncSession = Depends(get_db)):
     return templates.TemplateResponse(request, "logs.html", {
         "recent_workouts": recent_workouts, "active": "logs"
     })
+
+
+@router.get("/trainer-applications", response_class=HTMLResponse)
+async def admin_trainer_applications(request: Request, db: AsyncSession = Depends(get_db)):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    result = await db.execute(
+        select(TrainerApplication)
+        .options(selectinload(TrainerApplication.user))
+        .order_by(TrainerApplication.created_at.desc())
+    )
+    applications = result.scalars().all()
+
+    # Enrich with user stats
+    enriched = []
+    for app in applications:
+        total_result = await db.execute(
+            select(func.count(WorkoutSession.id))
+            .where(WorkoutSession.user_id == app.user_id, WorkoutSession.status == "finished")
+        )
+        total_workouts = total_result.scalar() or 0
+        xp_result = await db.execute(select(UserXP).where(UserXP.user_id == app.user_id))
+        xp = xp_result.scalar_one_or_none()
+        enriched.append({
+            "app": app,
+            "user": app.user,
+            "total_workouts": total_workouts,
+            "level": xp.current_level if xp else 1,
+            "xp": xp.total_xp if xp else 0,
+            "streak": xp.current_streak_days if xp else 0,
+        })
+
+    return templates.TemplateResponse(request, "trainer_applications.html", {
+        "applications": enriched,
+        "active": "trainer_applications",
+        "message": request.query_params.get("message"),
+    })
+
+
+@router.post("/trainer-applications/{app_id}/approve")
+async def approve_trainer_application(app_id: int, request: Request, db: AsyncSession = Depends(get_db)):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    result = await db.execute(
+        select(TrainerApplication).where(TrainerApplication.id == app_id).options(selectinload(TrainerApplication.user))
+    )
+    application = result.scalar_one_or_none()
+    if application:
+        application.status = "approved"
+        application.reviewed_at = datetime.now(timezone.utc)
+        application.user.role = "trainer"
+        await db.commit()
+    return RedirectResponse(url="/admin/trainer-applications?message=Application+approved", status_code=302)
+
+
+@router.post("/trainer-applications/{app_id}/reject")
+async def reject_trainer_application(
+    app_id: int, request: Request, admin_note: str = Form(""), db: AsyncSession = Depends(get_db)
+):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    result = await db.execute(select(TrainerApplication).where(TrainerApplication.id == app_id))
+    application = result.scalar_one_or_none()
+    if application:
+        application.status = "rejected"
+        application.admin_note = admin_note or None
+        application.reviewed_at = datetime.now(timezone.utc)
+        await db.commit()
+    return RedirectResponse(url="/admin/trainer-applications?message=Application+rejected", status_code=302)
+
