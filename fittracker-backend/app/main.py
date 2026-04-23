@@ -73,10 +73,6 @@ app.include_router(admin_router)
 
 @app.on_event("startup")
 async def startup_event():
-    # Run DB migrations automatically on startup
-    import subprocess
-    subprocess.run(["python", "-m", "alembic", "upgrade", "head"], check=True)
-
     start_scheduler()
     from app.database import AsyncSessionLocal
     from app.seeds.achievements import seed_achievements
