@@ -1,24 +1,4 @@
-version: "3.9"
-
 services:
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - backend
-      - frontend
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate --url http://nginx:80
-    depends_on:
-      - nginx
-
   db:
     image: postgres:15-alpine
     restart: unless-stopped
@@ -39,8 +19,6 @@ services:
   backend:
     build: ./fittracker-backend
     restart: unless-stopped
-    ports:
-      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -52,13 +30,12 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       UPLOAD_DIR: uploads
       MAX_UPLOAD_SIZE_MB: 5
-      BACKEND_CORS_ORIGINS: '["http://localhost:5173","http://localhost:3000","http://localhost:80","http://localhost"]'
+      BACKEND_CORS_ORIGINS: '["http://localhost","http://localhost:80"]'
       ENVIRONMENT: production
     volumes:
-      - ./fittracker-backend:/app
       - backend_uploads:/app/uploads
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -67,15 +44,19 @@ services:
   frontend:
     build: ./fittracker-frontend
     restart: unless-stopped
-    ports:
-      - "5173:5173"
     depends_on:
       - backend
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
     volumes:
-      - ./fittracker-frontend:/app
-      - /app/node_modules
-    environment:
-      VITE_API_URL: ""
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
 
 volumes:
   postgres_data:
